@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>De Koen Quiz 🎯</title>
+  </head>
+  <body>
+    <h1>De Koen Quiz</h1>
+    <div id="question">Loading today's question...</div>
+
+    <input id="username" placeholder="Your name" />
+    <input id="answer" placeholder="Your answer" />
+    <button onclick="submitAnswer()">Submit</button>
+
+    <script>
+      async function loadQuestion() {
+        const res = await fetch("/question");
+        const data = await res.json();
+        document.getElementById("question").innerText = data.question;
+      }
+
+      async function submitAnswer() {
+        const user = document.getElementById("username").value;
+        const answer = document.getElementById("answer").value;
+        await fetch("/answer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user, answer }),
+        });
+        alert("Answer sent!");
+      }
+
+      loadQuestion();
+    </script>
+  </body>
+</html>

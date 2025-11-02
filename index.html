@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>De Koen Quiz 🎯</title>
+    <title>De Koen Quiz</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+      input { margin: 5px 0; padding: 8px; width: 100%; }
+      button { padding: 10px 20px; margin-top: 10px; cursor: pointer; }
+      #question { margin-bottom: 15px; font-weight: bold; font-size: 1.2em; }
+    </style>
   </head>
   <body>
     <h1>De Koen Quiz</h1>
@@ -12,23 +18,52 @@
     <button onclick="submitAnswer()">Submit</button>
 
     <script>
+      let currentQuestionId = null;
+
+      // Load latest question
       async function loadQuestion() {
-        const res = await fetch("/question");
-        const data = await res.json();
-        document.getElementById("question").innerText = data.question;
+        try {
+          const res = await fetch("/question");
+          const data = await res.json();
+          document.getElementById("question").innerText = data.question;
+          currentQuestionId = data.id;
+        } catch (err) {
+          console.error(err);
+          document.getElementById("question").innerText = "Failed to load question.";
+        }
       }
 
+      // Submit answer
       async function submitAnswer() {
-        const user = document.getElementById("username").value;
-        const answer = document.getElementById("answer").value;
-        await fetch("/answer", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user, answer }),
-        });
-        alert("Answer sent!");
+        const user_name = document.getElementById("username").value.trim();
+        const answer = document.getElementById("answer").value.trim();
+
+        if (!user_name || !answer || !currentQuestionId) {
+          alert("Please enter your name, answer, and make sure a question is loaded.");
+          return;
+        }
+
+        try {
+          const res = await fetch("/answer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_name, answer, question_id: currentQuestionId }),
+          });
+
+          const result = await res.json();
+          if (result.status === "ok") {
+            alert("✅ Answer submitted!");
+            document.getElementById("answer").value = "";
+          } else {
+            alert("❌ Failed to submit answer.");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("❌ Error submitting answer.");
+        }
       }
 
+      // Initialize
       loadQuestion();
     </script>
   </body>

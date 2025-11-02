@@ -5,8 +5,8 @@ import bodyParser from "body-parser";
 import pkg from "pg";
 import path from "path";
 import { fileURLToPath } from "url";
+import { insertQuestionsToDB, appendAnswerToSheet } from "./googleSheets.js";
 import cron from "node-cron";
-import { insertQuestionsToDB, appendAnswerToSheet, resetQuestionsInDB } from "./googleSheets.js";
 
 const { Pool } = pkg;
 const app = express();
@@ -23,10 +23,10 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-// Reset and resync questions from Google Sheets at server start
-resetQuestionsInDB(pool)
-  .then(() => console.log("✅ Questions reset and synced from Google Sheets"))
-  .catch((err) => console.error("❌ Failed to reset questions:", err));
+// Sync questions from Google Sheets at server start
+insertQuestionsToDB(pool)
+  .then(() => console.log("✅ Questions synced from Google Sheets"))
+  .catch((err) => console.error("❌ Failed to sync questions:", err));
 
 // Serve homepage
 app.get("/", (req, res) => {
@@ -68,7 +68,7 @@ app.post("/answer", async (req, res) => {
     );
     const questionText = qRes.rows[0].question;
 
-    // Append answer to Google Sheet (Columns C–E)
+    // Append answer to Google Sheet
     await appendAnswerToSheet(user_name, answer, questionText);
 
     res.json({ status: "ok" });
@@ -81,12 +81,8 @@ app.post("/answer", async (req, res) => {
 // Optional: auto-sync new questions daily at midnight
 cron.schedule("0 0 * * *", async () => {
   console.log("Syncing questions from Google Sheets...");
-  try {
-    await insertQuestionsToDB(pool);
-    console.log("✅ Done!");
-  } catch (err) {
-    console.error("❌ Failed to sync questions:", err);
-  }
+  await insertQuestionsToDB(pool);
+  console.log("✅ Done!");
 });
 
 // Start server

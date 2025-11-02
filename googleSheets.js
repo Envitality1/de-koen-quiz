@@ -37,13 +37,19 @@ export async function insertQuestionsToDB(pool) {
 
 // Append a user answer to Google Sheets (answers start from column C)
 export async function appendAnswerToSheet(user_name, answer, questionText) {
+  // Get current time in UTC+1
+  const now = new Date();
+  const utc1 = new Date(now.getTime() + 1 * 60 * 60 * 1000); // add 1 hour
+
+  const timestamp = `${utc1.getFullYear()}-${String(utc1.getMonth() + 1).padStart(2,'0')}-${String(utc1.getDate()).padStart(2,'0')};${String(utc1.getHours()).padStart(2,'0')}:${String(utc1.getMinutes()).padStart(2,'0')}:${String(utc1.getSeconds()).padStart(2,'0')}`;
+
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: "Sheet1!C:E",
+    range: "Sheet1!A:D", // Name, Answer, Time, Question
     valueInputOption: "RAW",
     insertDataOption: "INSERT_ROWS",
     requestBody: {
-      values: [[questionText, user_name, answer]],
+      values: [[user_name, answer, timestamp, questionText]],
     },
   });
 }

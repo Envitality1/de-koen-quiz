@@ -45,7 +45,7 @@ export async function appendAnswerToSheet(user_name, answer, questionText) {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: "Sheet1!A:D", // Name, Answer, Time, Question
+    range: "Sheet1!C:F", // Name, Answer, Time, Question
     valueInputOption: "RAW",
     insertDataOption: "INSERT_ROWS",
     requestBody: {

@@ -1,77 +1,49 @@
 import { google } from "googleapis";
-import fs from "fs";
 
-// Load service account credentials
-const credentials = JSON.parse(fs.readFileSync("service-account.json"));
+// Read credentials from environment variable (set in Render or local .env)
+const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
 
-// Authenticate with Google Sheets
 const auth = new google.auth.GoogleAuth({
   credentials,
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
-const sheets = google.sheets({ version: "v4", auth });
+export const sheets = google.sheets({ version: "v4", auth });
 
-// Replace this with your actual Google Sheet ID
-const SPREADSHEET_ID = "1eJLd2rerfazwQDozdF-bKxNfr068Lb6TfOXEwplCElA";
+// Replace with your actual Google Sheet ID
+const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID || "YOUR_SHEET_ID_HERE";
 
-const QUESTIONS_RANGE = "Sheet1!A2:A";  // column A for questions
-const ANSWERS_RANGE = "Sheet1!C:E";     // columns C–E for answers
-
-// Fetch questions from Google Sheets (Column A)
+// Fetch questions from column A and insert into PostgreSQL
 export async function fetchQuestions() {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: QUESTIONS_RANGE,
+    range: "Sheet1!A2:A", // questions start at A2
   });
-
   const rows = res.data.values || [];
-  return rows.map(r => r[0]); // array of question strings
+  return rows.map((row) => row[0]);
 }
 
-// Insert questions into PostgreSQL if they don't already exist
+// Insert questions into DB
 export async function insertQuestionsToDB(pool) {
   const questions = await fetchQuestions();
+
+  // Reset questions table (truncates answers too)
+  await pool.query("TRUNCATE TABLE answers, questions RESTART IDENTITY CASCADE");
+
   for (const question of questions) {
-    await pool.query(
-      "INSERT INTO questions (question) VALUES ($1) ON CONFLICT DO NOTHING",
-      [question]
-    );
+    await pool.query("INSERT INTO questions (question) VALUES ($1)", [question]);
   }
 }
 
-export async function appendAnswerToSheet(user_name, answer, question) {
-  const now = new Date();
-
-  // Format: 2025-11-02;14:18:22
-  const formattedTime = now.getFullYear() + "-" +
-                        String(now.getMonth() + 1).padStart(2, "0") + "-" +
-                        String(now.getDate()).padStart(2, "0") + ";" +
-                        String(now.getHours()).padStart(2, "0") + ":" +
-                        String(now.getMinutes()).padStart(2, "0") + ":" +
-                        String(now.getSeconds()).padStart(2, "0");
-
+// Append a user answer to Google Sheets (answers start from column C)
+export async function appendAnswerToSheet(user_name, answer, questionText) {
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: ANSWERS_RANGE,
+    range: "Sheet1!C:E",
     valueInputOption: "RAW",
-    resource: {
-      values: [[user_name, answer, formattedTime, question]],
+    insertDataOption: "INSERT_ROWS",
+    requestBody: {
+      values: [[questionText, user_name, answer]],
     },
   });
-}
-
-// Truncate questions table and resync
-export async function resetQuestionsInDB(pool) {
-  try {
-    // Delete all questions (and answers related to them)
-    await pool.query("TRUNCATE TABLE questions RESTART IDENTITY CASCADE");
-
-    console.log("✅ Questions table cleared");
-    // Insert questions from Google Sheets
-    await insertQuestionsToDB(pool);
-    console.log("✅ Questions resynced from Google Sheets");
-  } catch (err) {
-    console.error("❌ Failed to reset questions:", err);
-  }
 }

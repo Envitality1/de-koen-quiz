@@ -1,0 +1,20 @@
+# Node modules (never commit dependencies)
+node_modules/
+
+# Environment variables
+.env
+
+# Google service account credentials
+service-account.json
+
+# Logs
+*.log
+
+# Optional: local IDE files
+.vscode/
+.DS_Store
+
+# Optional: npm debug files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

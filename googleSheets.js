@@ -43,11 +43,12 @@ export async function appendAnswerToSheet(user_name, answer, questionText) {
 
   const timestamp = `${utc1.getFullYear()}-${String(utc1.getMonth() + 1).padStart(2,'0')}-${String(utc1.getDate()).padStart(2,'0')};${String(utc1.getHours()).padStart(2,'0')}:${String(utc1.getMinutes()).padStart(2,'0')}:${String(utc1.getSeconds()).padStart(2,'0')}`;
 
+  // Append values starting at C2, so column A stays untouched
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: "Sheet1!C:F", // Name, Answer, Time, Question
+    range: "Sheet1!C2:F", // Name, Answer, Time, Question
     valueInputOption: "RAW",
-    insertDataOption: "INSERT_ROWS",
+    insertDataOption: "OVERWRITE", // Append at bottom without shifting other rows
     requestBody: {
       values: [[user_name, answer, timestamp, questionText]],
     },

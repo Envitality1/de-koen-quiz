@@ -1,1 +1,1 @@
-TRUNCATE TABLE answers, questions RESTART IDENTITY CASCADE;
+select * from questions

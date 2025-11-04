@@ -1,70 +1,65 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>De Koen Quiz</title>
-    <style>
-      body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-      input { margin: 5px 0; padding: 8px; width: 100%; }
-      button { padding: 10px 20px; margin-top: 10px; cursor: pointer; }
-      #question { margin-bottom: 15px; font-weight: bold; font-size: 1.2em; }
-    </style>
-  </head>
-  <body>
-    <h1>De Koen Quiz</h1>
-    <div id="question">Loading today's question...</div>
+<head>
+  <title>De Koen Quiz 🎯</title>
+</head>
+<body>
+<h1>De Koen Quiz</h1>
 
-    <input id="username" placeholder="Your name" />
-    <input id="answer" placeholder="Your answer" />
-    <button onclick="submitAnswer()">Submit</button>
+<div id="question">Loading today's question...</div>
+<div id="choices"></div>
 
-    <script>
-      let currentQuestionId = null;
+<input id="username" placeholder="Your name" />
+<input id="answer" placeholder="Your answer" />
+<button onclick="submitAnswer()">Submit</button>
 
-      // Load latest question
-      async function loadQuestion() {
-        try {
-          const res = await fetch("/question");
-          const data = await res.json();
-          document.getElementById("question").innerText = data.question;
-          currentQuestionId = data.id;
-        } catch (err) {
-          console.error(err);
-          document.getElementById("question").innerText = "Failed to load question.";
-        }
-      }
+<script>
+let currentQuestionId = null;
 
-      // Submit answer
-      async function submitAnswer() {
-        const user_name = document.getElementById("username").value.trim();
-        const answer = document.getElementById("answer").value.trim();
+async function loadQuestion() {
+  const res = await fetch("/question");
+  const data = await res.json();
+  currentQuestionId = data.id;
+  document.getElementById("question").innerText = data.question;
 
-        if (!user_name || !answer || !currentQuestionId) {
-          alert("Please enter your name, answer, and make sure a question is loaded.");
-          return;
-        }
+  const choicesDiv = document.getElementById("choices");
+  choicesDiv.innerHTML = "";
 
-        try {
-          const res = await fetch("/answer", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_name, answer, question_id: currentQuestionId }),
-          });
+  if (data.choices.length > 0) {
+    data.choices.forEach(choice => {
+      const btn = document.createElement("button");
+      btn.innerText = choice;
+      btn.onclick = () => document.getElementById("answer").value = choice;
+      choicesDiv.appendChild(btn);
+    });
+    document.getElementById("answer").placeholder = "Or type your own answer";
+  } else {
+    document.getElementById("answer").placeholder = "Type your answer";
+  }
+}
 
-          const result = await res.json();
-          if (result.status === "ok") {
-            alert("✅ Answer submitted!");
-            document.getElementById("answer").value = "";
-          } else {
-            alert("❌ Failed to submit answer.");
-          }
-        } catch (err) {
-          console.error(err);
-          alert("❌ Error submitting answer.");
-        }
-      }
+async function submitAnswer() {
+  const user = document.getElementById("username").value;
+  const answer = document.getElementById("answer").value;
 
-      // Initialize
-      loadQuestion();
-    </script>
-  </body>
+  if (!user || !answer || !currentQuestionId) {
+    alert("Please enter your name and an answer.");
+    return;
+  }
+
+  const res = await fetch("/answer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_name: user, answer, question_id: currentQuestionId }),
+  });
+
+  const result = await res.json();
+  if (result.error) alert(result.error);
+  else alert("Answer sent!");
+  document.getElementById("answer").value = "";
+}
+
+loadQuestion();
+</script>
+</body>
 </html>

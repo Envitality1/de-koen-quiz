@@ -1,6 +1,6 @@
 import { google } from "googleapis";
 
-// Read credentials from environment variable (set in Render or local .env)
+// Read credentials from environment variable
 const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
 
 const auth = new google.auth.GoogleAuth({
@@ -10,45 +10,49 @@ const auth = new google.auth.GoogleAuth({
 
 export const sheets = google.sheets({ version: "v4", auth });
 
-// Replace with your actual Google Sheet ID
-const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID || "YOUR_SHEET_ID_HERE";
+// Google Sheet ID
+const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 
-// Fetch questions from column A and insert into PostgreSQL
+// Fetch questions from columns A (question) & B (choices)
 export async function fetchQuestions() {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: "Sheet1!A2:A", // questions start at A2
+    range: "Sheet1!A2:B",
   });
   const rows = res.data.values || [];
-  return rows.map((row) => row[0]);
+  return rows.map(row => ({
+    question: row[0],
+    choices: row[1] ? row[1].split(",").map(c => c.trim()) : [],
+  }));
 }
 
-// Insert questions into DB
+// Insert questions into PostgreSQL
 export async function insertQuestionsToDB(pool) {
   const questions = await fetchQuestions();
 
-  // Reset questions table (truncates answers too)
-  await pool.query("TRUNCATE TABLE answers, questions RESTART IDENTITY CASCADE");
+  // Truncate only questions table (don't touch answers)
+  await pool.query("TRUNCATE TABLE questions RESTART IDENTITY CASCADE");
 
-  for (const question of questions) {
-    await pool.query("INSERT INTO questions (question) VALUES ($1)", [question]);
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  for (const q of questions) {
+    await pool.query(
+      "INSERT INTO questions (question, choices, quiz_date) VALUES ($1, $2, $3)",
+      [q.question, JSON.stringify(q.choices), today]
+    );
   }
 }
 
-// Append a user answer to Google Sheets (answers start from column C)
+// Append answer to Google Sheets (columns D–G)
 export async function appendAnswerToSheet(user_name, answer, questionText) {
-  // Get current time in UTC+1
   const now = new Date();
-  const utc1 = new Date(now.getTime() + 1 * 60 * 60 * 1000); // add 1 hour
+  const utc1 = new Date(now.getTime() + 1 * 60 * 60 * 1000); // UTC+1
+  const timestamp = `${utc1.getFullYear()}-${String(utc1.getMonth()+1).padStart(2,'0')}-${String(utc1.getDate()).padStart(2,'0')};${String(utc1.getHours()).padStart(2,'0')}:${String(utc1.getMinutes()).padStart(2,'0')}:${String(utc1.getSeconds()).padStart(2,'0')}`;
 
-  const timestamp = `${utc1.getFullYear()}-${String(utc1.getMonth() + 1).padStart(2,'0')}-${String(utc1.getDate()).padStart(2,'0')};${String(utc1.getHours()).padStart(2,'0')}:${String(utc1.getMinutes()).padStart(2,'0')}:${String(utc1.getSeconds()).padStart(2,'0')}`;
-
-  // Append values starting at C2, so column A stays untouched
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: "Sheet1!C2:F", // Name, Answer, Time, Question
+    range: "Sheet1!D:G",
     valueInputOption: "RAW",
-    insertDataOption: "OVERWRITE", // Append at bottom without shifting other rows
+    insertDataOption: "INSERT_ROWS",
     requestBody: {
       values: [[user_name, answer, timestamp, questionText]],
     },

@@ -5,8 +5,7 @@ import bodyParser from "body-parser";
 import pkg from "pg";
 import path from "path";
 import { fileURLToPath } from "url";
-import { insertQuestionsToDB, appendAnswerToSheet } from "./googleSheets.js";
-import cron from "node-cron";
+import { insertQuestionsToDB, appendAnswerToSheet, fetchQuestions } from "./googleSheets.js";
 
 const { Pool } = pkg;
 const app = express();
@@ -24,22 +23,34 @@ const pool = new Pool({
 });
 
 // Sync questions from Google Sheets at server start
-insertQuestionsToDB(pool)
-  .then(() => console.log("✅ Questions synced from Google Sheets"))
-  .catch((err) => console.error("❌ Failed to sync questions:", err));
+(async () => {
+  try {
+    await insertQuestionsToDB(pool);
+    console.log("✅ Questions synced from Google Sheets");
+  } catch (err) {
+    console.error("❌ Failed to sync questions:", err);
+  }
+})();
 
 // Serve homepage
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Get latest question
+// Get today's question
 app.get("/question", async (req, res) => {
   try {
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
     const result = await pool.query(
-      "SELECT id, question FROM questions ORDER BY id DESC LIMIT 1"
+      "SELECT id, question, choices FROM questions WHERE quiz_date = $1 LIMIT 1",
+      [today]
     );
-    res.json(result.rows[0] || { id: null, question: "No question today yet!" });
+    if (result.rows.length === 0) return res.json({ id: null, question: "No question today!", choices: [] });
+
+    const q = result.rows[0];
+    // Parse stored choices JSON
+    const choices = q.choices ? JSON.parse(q.choices) : [];
+    res.json({ id: q.id, question: q.question, choices });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch question" });
@@ -48,41 +59,51 @@ app.get("/question", async (req, res) => {
 
 // Submit answer
 app.post("/answer", async (req, res) => {
-  const { user_name, answer, question_id } = req.body;
-
-  if (!user_name || !answer || !question_id) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-
   try {
-    // Insert answer into PostgreSQL
-    const result = await pool.query(
-      "INSERT INTO answers (user_name, answer, question_id) VALUES ($1, $2, $3) RETURNING *",
+    const { user_name, answer, question_id } = req.body;
+    if (!user_name || !answer || !question_id) return res.status(400).json({ error: "Missing required fields" });
+
+    // Check if user already answered
+    const alreadyAnswered = await pool.query(
+      "SELECT id FROM answers WHERE user_name=$1 AND question_id=$2",
+      [user_name, question_id]
+    );
+    if (alreadyAnswered.rows.length > 0) return res.status(400).json({ error: "You already answered today's question" });
+
+    // Insert into PostgreSQL
+    await pool.query(
+      "INSERT INTO answers (user_name, answer, question_id) VALUES ($1, $2, $3)",
       [user_name, answer, question_id]
     );
 
     // Get question text
-    const qRes = await pool.query(
-      "SELECT question FROM questions WHERE id=$1",
-      [question_id]
-    );
+    const qRes = await pool.query("SELECT question FROM questions WHERE id=$1", [question_id]);
     const questionText = qRes.rows[0].question;
 
-    // Append answer to Google Sheet
+    // Append to Google Sheet
     await appendAnswerToSheet(user_name, answer, questionText);
 
     res.json({ status: "ok" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Database insert failed" });
+    console.error("Error submitting answer:", err);
+    res.status(500).json({ error: "Failed to submit answer" });
   }
 });
 
-// Optional: auto-sync new questions daily at midnight
+// Optional: auto-sync questions daily at 00:00 UTC+1
+import cron from "node-cron";
 cron.schedule("0 0 * * *", async () => {
   console.log("Syncing questions from Google Sheets...");
-  await insertQuestionsToDB(pool);
-  console.log("✅ Done!");
+  try {
+    await insertQuestionsToDB(pool);
+    console.log("✅ Done!");
+  } catch (err) {
+    console.error("❌ Failed to sync daily questions:", err);
+  }
+});
+
+app.get("/ping", (req, res) => {
+  res.send("pong");
 });
 
 // Start server

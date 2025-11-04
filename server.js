@@ -36,13 +36,37 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Get today's question
+// Get the next question (1 per day)
 app.get("/question", async (req, res) => {
   try {
+    // Fetch the next question that hasn't been used yet
     const result = await pool.query(
-      "SELECT * FROM questions ORDER BY quiz_date ASC LIMIT 1"
+      "SELECT id, question, choices FROM questions WHERE quiz_date IS NULL ORDER BY id ASC LIMIT 1"
     );
-    res.json(result.rows[0] || { id: null, question: "No question today yet!" });
+
+    if (!result.rows[0]) {
+      return res.json({ id: null, question: "No more questions left today!", choices: null });
+    }
+
+    const nextQuestion = result.rows[0];
+
+    // Mark it as used today
+    await pool.query(
+      "UPDATE questions SET quiz_date = CURRENT_DATE WHERE id=$1",
+      [nextQuestion.id]
+    );
+
+    // If there are choices, split them into an array
+    const choicesArray = nextQuestion.choices
+      ? nextQuestion.choices.split(",").map(c => c.trim())
+      : null;
+
+    res.json({
+      id: nextQuestion.id,
+      question: nextQuestion.question,
+      choices: choicesArray
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch question" });
@@ -55,18 +79,22 @@ app.post("/answer", async (req, res) => {
   if (!user_name || !answer || !question_id) return res.status(400).json({ error: "Missing fields" });
 
   try {
-    const result = await pool.query(
-      "INSERT INTO answers (user_name, answer, question_id) VALUES ($1, $2, $3) RETURNING *",
+    // Insert into PostgreSQL
+    await pool.query(
+      "INSERT INTO answers (user_name, answer, question_id) VALUES ($1, $2, $3)",
       [user_name, answer, question_id]
     );
 
+    // Fetch question text
     const qRes = await pool.query(
       "SELECT question FROM questions WHERE id=$1",
       [question_id]
     );
     const questionText = qRes.rows[0].question;
 
+    // Append answer to Google Sheets
     await appendAnswerToSheet(user_name, answer, questionText);
+
     res.json({ status: "ok" });
   } catch (err) {
     console.error(err);
@@ -74,12 +102,13 @@ app.post("/answer", async (req, res) => {
   }
 });
 
-// Daily cron job at 00:00 UTC+1
-cron.schedule("0 23 * * *", async () => { // 23:00 UTC = 00:00 UTC+1
+// Daily cron job at 00:00 UTC+1 (23:00 UTC)
+cron.schedule("0 23 * * *", async () => {
   console.log("Syncing questions from Google Sheets...");
   await insertQuestionsToDB(pool);
   console.log("✅ Done!");
 });
 
+// Start server
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`✅ De Koen Quiz server running on port ${port}`));

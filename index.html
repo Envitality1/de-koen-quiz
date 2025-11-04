@@ -4,49 +4,96 @@
     <title>De Koen Quiz 🎯</title>
     <style>
       body {
-        font-family: sans-serif;
         display: flex;
         flex-direction: column;
-        align-items: center;
         justify-content: center;
+        align-items: center;
         height: 100vh;
+        font-family: Arial, sans-serif;
+        text-align: center;
       }
-      input, button {
+      #choices button {
         margin: 5px;
-        padding: 8px;
+        padding: 10px 20px;
+        font-size: 16px;
+      }
+      input {
+        padding: 10px;
+        font-size: 16px;
+        margin: 5px 0;
+      }
+      button.submit {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
       }
     </style>
   </head>
   <body>
     <h1>De Koen Quiz</h1>
     <div id="question">Loading today's question...</div>
-
-    <input id="username" placeholder="Your name" />
-    <input id="answer" placeholder="Your answer" />
-    <button onclick="submitAnswer()">Submit</button>
+    <div id="choices"></div>
+    <div id="free-answer" style="display:none;">
+      <input id="username" placeholder="Your name" />
+      <input id="answer" placeholder="Your answer" />
+      <button class="submit" onclick="submitAnswer()">Submit</button>
+    </div>
 
     <script>
+      let currentQuestionId = null;
+
       async function loadQuestion() {
         const res = await fetch("/question");
         const data = await res.json();
-        document.getElementById("question").innerText = data.question || "No question today yet!";
+
+        if (!data.id) {
+          document.getElementById("question").innerText = data.question;
+          document.getElementById("choices").innerHTML = "";
+          document.getElementById("free-answer").style.display = "none";
+          return;
+        }
+
+        currentQuestionId = data.id;
+        document.getElementById("question").innerText = data.question;
+
+        if (data.choices && data.choices.length > 0) {
+          // Multiple-choice
+          const choicesDiv = document.getElementById("choices");
+          choicesDiv.innerHTML = "";
+          data.choices.forEach(choice => {
+            const btn = document.createElement("button");
+            btn.innerText = choice;
+            btn.onclick = () => submitAnswer(choice);
+            choicesDiv.appendChild(btn);
+          });
+          document.getElementById("free-answer").style.display = "block";
+        } else {
+          // Free answer only
+          document.getElementById("choices").innerHTML = "";
+          document.getElementById("free-answer").style.display = "block";
+        }
       }
 
-      async function submitAnswer() {
-        const user_name = document.getElementById("username").value;
-        const answer = document.getElementById("answer").value;
-        const resQ = await fetch("/question");
-        const question = await resQ.json();
-        const question_id = question.id;
+      async function submitAnswer(selectedChoice = null) {
+        const user = document.getElementById("username").value;
+        let answer = selectedChoice || document.getElementById("answer").value;
 
-        if(!question_id) return alert("No question today!");
+        if (!user || !answer) {
+          alert("Please enter your name and answer.");
+          return;
+        }
 
         await fetch("/answer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_name, answer, question_id }),
+          body: JSON.stringify({ user_name: user, answer, question_id: currentQuestionId }),
         });
-        alert("Answer sent!");
+
+        alert("Answer submitted!");
+        // Clear input
+        document.getElementById("answer").value = "";
+        document.getElementById("username").value = "";
+        loadQuestion();
       }
 
       loadQuestion();

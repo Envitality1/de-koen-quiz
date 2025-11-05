@@ -29,20 +29,27 @@ export async function fetchQuestions() {
   }));
 }
 
-// Insert questions into PostgreSQL
+//sync to DB
 export async function insertQuestionsToDB(pool) {
   const questions = await fetchQuestions();
 
-  // Truncate tables safely
+  // Reset table
   await pool.query("TRUNCATE TABLE answers, questions RESTART IDENTITY CASCADE");
 
-  for (const q of questions) {
+  let today = new Date();
+
+  for (let i = 0; i < questions.length; i++) {
+    const quizDate = new Date(today);
+    quizDate.setDate(today.getDate() + i);
+
+    const { question, choices } = questions[i];
     await pool.query(
-      "INSERT INTO questions (question, choices) VALUES ($1, $2)",
-      [q.question, q.choices]
+      "INSERT INTO questions (question, choices, quiz_date) VALUES ($1, $2, $3)",
+      [question, choices || null, quizDate]
     );
   }
 }
+
 
 // Append a user answer to Google Sheets (Columns D–G)
 export async function appendAnswerToSheet(user_name, answer, questionText) {

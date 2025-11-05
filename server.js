@@ -49,26 +49,27 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Get today's question with multiple-choice options
+// Get today's or most recent question
 app.get("/question", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT id, question, choices FROM questions ORDER BY quiz_date ASC LIMIT 1"
-    );
+    const result = await pool.query(`
+      SELECT * FROM questions 
+      WHERE quiz_date <= CURRENT_DATE
+      ORDER BY quiz_date DESC 
+      LIMIT 1
+    `);
 
-    if (!result.rows[0]) {
-      return res.json({ id: null, question: "No question today yet!", choices: [] });
+    if (result.rows.length === 0) {
+      return res.json({ id: null, question: "No question today yet!" });
     }
 
-    // Send choices as an array (empty if none)
-    const { id, question, choices } = result.rows[0];
-    res.json({ id, question, choices: choices || [] });
-
+    res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error fetching question:", err);
     res.status(500).json({ error: "Failed to fetch question" });
   }
 });
+
 
 // Submit answer
 app.post("/answer", async (req, res) => {

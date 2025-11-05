@@ -46,18 +46,19 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Get question
+// Get latest question (always show the last one)
 app.get("/question", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, question, choices FROM questions ORDER BY id ASC LIMIT 1"
+      "SELECT id, question, choices FROM questions ORDER BY id DESC LIMIT 1"
     );
-    res.json(result.rows[0] || { id: null, question: "No question yet!", choices: null });
+    res.json(result.rows[0] || { id: null, question: "No question today yet!", choices: null });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch question" });
   }
 });
+
 
 // Submit answer
 app.post("/answer", async (req, res) => {

@@ -1,103 +1,103 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>De Koen Quiz</title>
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-    }
-    h1 {
-      margin-bottom: 20px;
-    }
-    #choices button {
-      margin: 5px;
-      padding: 10px 15px;
-      cursor: pointer;
-    }
-    #answer {
-      margin-top: 10px;
-      padding: 5px;
-      width: 200px;
-    }
-    #submit-btn {
-      margin-top: 10px;
-      padding: 10px 20px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <h1>De Koen Quiz</h1>
-  <div id="question">Loading today's question...</div>
-  <div id="choices"></div>
-  <input id="username" placeholder="Your name" />
-  <input id="answer" placeholder="Your answer" />
-  <button id="submit-btn">Submit</button>
+  <head>
+    <title>De Koen Quiz 🎯</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+      }
+      .quiz-container {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        text-align: center;
+        max-width: 500px;
+        width: 100%;
+      }
+      input, button, select {
+        padding: 10px;
+        margin: 10px 0;
+        width: 80%;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="quiz-container">
+      <h1>De Koen Quiz</h1>
+      <div id="question">Loading today's question...</div>
 
-  <script>
-    let currentQuestionId = null;
+      <div id="answer-section">
+        <input id="username" placeholder="Your name" />
 
-    async function loadQuestion() {
-      const res = await fetch("/question");
-      const data = await res.json();
+        <select id="choice-select" style="display:none"></select>
+        <input id="answer" placeholder="Your answer" />
 
-      currentQuestionId = data.id;
-      document.getElementById("question").innerText = data.question;
+        <button onclick="submitAnswer()">Submit</button>
+      </div>
+    </div>
 
-      const choicesDiv = document.getElementById("choices");
-      choicesDiv.innerHTML = "";
+    <script>
+      let currentQuestion = null;
 
-      if (data.choices && data.choices.length > 0) {
-        // Split comma-separated choices if needed
-        const choiceArray = data.choices.join(',').split(',').map(c => c.trim());
-        choiceArray.forEach(choice => {
-          const btn = document.createElement("button");
-          btn.innerText = choice;
-          btn.onclick = () => {
-            document.getElementById("answer").value = choice;
-          };
-          choicesDiv.appendChild(btn);
+      async function loadQuestion() {
+        const res = await fetch("/question");
+        const data = await res.json();
+        currentQuestion = data;
+        document.getElementById("question").innerText = data.question;
+
+        // If there are choices, show them
+        if (data.choices) {
+          const select = document.getElementById("choice-select");
+          select.innerHTML = '';
+          const options = data.choices.split(',').map(opt => opt.trim());
+          options.forEach(opt => {
+            const optionEl = document.createElement('option');
+            optionEl.value = opt;
+            optionEl.textContent = opt;
+            select.appendChild(optionEl);
+          });
+          select.style.display = 'block';
+          document.getElementById("answer").placeholder = "Or type your answer";
+        } else {
+          document.getElementById("choice-select").style.display = 'none';
+          document.getElementById("answer").placeholder = "Your answer";
+        }
+      }
+
+      async function submitAnswer() {
+        const user = document.getElementById("username").value;
+        let answer = document.getElementById("answer").value;
+
+        // If nothing typed, take selected choice
+        const select = document.getElementById("choice-select");
+        if (!answer && select.style.display !== 'none') {
+          answer = select.value;
+        }
+
+        if (!user || !answer) {
+          alert("Please enter your name and answer.");
+          return;
+        }
+
+        await fetch("/answer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_name: user, answer, question_id: currentQuestion.id }),
         });
-      }
-    }
 
-    async function submitAnswer() {
-      const user = document.getElementById("username").value;
-      const answer = document.getElementById("answer").value;
-
-      if (!user || !answer || !currentQuestionId) {
-        alert("Please enter your name and an answer!");
-        return;
-      }
-
-      const res = await fetch("/answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_name: user,
-          answer: answer,
-          question_id: currentQuestionId
-        })
-      });
-
-      const data = await res.json();
-      if (data.status === "ok") {
         alert("Answer sent!");
-        document.getElementById("answer").value = "";
-        document.getElementById("username").value = "";
-      } else {
-        alert("Error submitting answer: " + (data.error || "Unknown error"));
+        document.getElementById("username").value = '';
+        document.getElementById("answer").value = '';
       }
-    }
 
-    document.getElementById("submit-btn").onclick = submitAnswer;
-    loadQuestion();
-  </script>
-</body>
+      loadQuestion();
+    </script>
+  </body>
 </html>

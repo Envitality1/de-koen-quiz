@@ -28,13 +28,13 @@ const pool = new Pool({
 app.get("/sync", async (req, res) => {
   try {
     await insertQuestionsToDB(pool);
-    console.log("✅ Questions manually synced via /sync");
-    res.redirect("/"); // Go back to homepage after syncing
+    res.redirect("/"); // redirect back to home
   } catch (err) {
-    console.error("❌ Manual sync failed:", err);
+    console.error(err);
     res.status(500).send("Failed to sync questions");
   }
 });
+
 
 // Ping endpoint for uptime monitors
 app.get("/ping", (req, res) => res.send("pong"));
@@ -49,26 +49,19 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Get today's or most recent question
+// Get latest question
 app.get("/question", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT * FROM questions 
-      WHERE quiz_date <= CURRENT_DATE
-      ORDER BY quiz_date DESC 
-      LIMIT 1
-    `);
-
-    if (result.rows.length === 0) {
-      return res.json({ id: null, question: "No question today yet!" });
-    }
-
-    res.json(result.rows[0]);
+    const result = await pool.query(
+      "SELECT * FROM questions ORDER BY id DESC LIMIT 1"
+    );
+    res.json(result.rows[0] || { id: null, question: "No question today yet!" });
   } catch (err) {
-    console.error("❌ Error fetching question:", err);
+    console.error(err);
     res.status(500).json({ error: "Failed to fetch question" });
   }
 });
+
 
 
 // Submit answer

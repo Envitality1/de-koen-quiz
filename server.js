@@ -90,5 +90,18 @@ cron.schedule("0 23 * * *", async () => { // 23:00 UTC = 00:00 UTC+1
   console.log("✅ Done!");
 });
 
+// Manual sync route (for testing)
+app.post("/sync", async (req, res) => {
+  try {
+    await insertQuestionsToDB(pool);
+    console.log("✅ Questions manually synced via /sync");
+    res.json({ status: "ok", message: "Questions synced successfully" });
+  } catch (err) {
+    console.error("❌ Manual sync failed:", err);
+    res.status(500).json({ error: "Failed to sync questions" });
+  }
+});
+
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`✅ De Koen Quiz server running on port ${port}`));

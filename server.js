@@ -60,7 +60,7 @@ app.get("/question", async (req, res) => {
 });
 
 
-// Submit answer
+// Submit answers
 app.post("/answer", async (req, res) => {
   const { user_name, answer, question_id } = req.body;
   if (!user_name || !answer || !question_id) return res.status(400).json({ error: "Missing fields" });

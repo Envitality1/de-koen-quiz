@@ -2,18 +2,137 @@
 <html>
 <head>
   <title>De Koen Quiz 🎯</title>
+
   <style>
-    body { font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; }
-    #choices button { margin:3px; }
+    body {
+      margin: 0;
+      font-family: "Inter", sans-serif;
+      background: linear-gradient(135deg, #f0f4ff, #e3ebff);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    /* Main centered card */
+    .quiz-card {
+      background: white;
+      padding: 35px 40px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 480px;
+      box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.15);
+      text-align: center;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+      color: #2b3a67;
+    }
+
+    #question {
+      font-size: 20px;
+      margin: 20px 0 25px;
+      color: #324a7a;
+      font-weight: 600;
+    }
+
+    /* Inputs */
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      margin-top: 10px;
+      border-radius: 12px;
+      border: 1px solid #cfd7ea;
+      font-size: 16px;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    input:focus {
+      border-color: #6b8cff;
+      box-shadow: 0 0 0 3px rgba(107, 140, 255, 0.3);
+    }
+
+    /* Multiple choice buttons */
+    #choices button {
+      padding: 10px 16px;
+      margin: 5px;
+      border-radius: 12px;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+      background: #dfe7ff;
+      color: #2b3a67;
+      transition: 0.2s;
+    }
+
+    #choices button:hover {
+      background: #c9d5ff;
+      transform: translateY(-2px);
+    }
+
+    /* Submit button */
+    button.submit-btn {
+      width: 100%;
+      margin-top: 15px;
+      padding: 14px;
+      border: none;
+      background: #6b8cff;
+      color: white;
+      font-size: 17px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button.submit-btn:hover {
+      background: #5875e6;
+      transform: translateY(-2px);
+    }
+
+    /* Credits */
+    .credits {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      font-size: 14px;
+      color: #4b4b4b;
+      opacity: 0.8;
+    }
   </style>
+
 </head>
 <body>
-  <h1>De Koen Quiz</h1>
-  <div id="question">Loading today's question...</div>
-  <div id="choices"></div>
-  <input id="username" placeholder="Your name" />
-  <input id="answer" placeholder="Your answer" />
-  <button onclick="submitAnswer()">Submit</button>
+
+  <div class="quiz-card">
+    <h1>De Koen Quiz</h1>
+
+    <div id="question">Loading today's question...</div>
+
+    <div id="choices"></div>
+
+    <input id="username" placeholder="Your name" />
+    <input id="answer" placeholder="Your answer" />
+
+    <button class="submit-btn" onclick="submitAnswer()">Submit</button>
+  </div>
+
+  <!-- Credits -->
+  <div class="credits">
+    website made by <b>Tamir Boesjes</b><br>
+    questions by <b>Koen van Dijk</b>
+  </div>
 
   <script>
     let currentQuestionId = null;
@@ -22,10 +141,12 @@
       const res = await fetch("/question");
       const data = await res.json();
       currentQuestionId = data.id;
+
       document.getElementById("question").innerText = data.question;
 
       const choicesDiv = document.getElementById("choices");
       choicesDiv.innerHTML = "";
+
       if (data.choices) {
         const choices = data.choices.split(",");
         choices.forEach(choice => {
@@ -41,20 +162,28 @@
       const user = document.getElementById("username").value;
       const answer = document.getElementById("answer").value;
 
-      if (!user || !answer || !currentQuestionId) return alert("Fill all fields!");
+      if (!user || !answer || !currentQuestionId) {
+        alert("Please enter your name and answer!");
+        return;
+      }
 
       await fetch("/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_name: user, answer, question_id: currentQuestionId }),
+        body: JSON.stringify({
+          user_name: user,
+          answer: answer,
+          question_id: currentQuestionId
+        })
       });
 
       alert("Answer submitted!");
       document.getElementById("answer").value = "";
-      loadQuestion();
+      document.getElementById("username").value = "";
     }
 
     loadQuestion();
   </script>
+
 </body>
 </html>

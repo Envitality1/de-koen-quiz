@@ -44,16 +44,37 @@ export async function insertQuestionsToDB(pool) {
 
 // Append user answer to Google Sheets (columns D–G: Name, Answer, Time, Question)
 export async function appendAnswerToSheet(user_name, answer, questionText) {
+  // Get current time in UTC+1
   const now = new Date();
-  const utc1 = new Date(now.getTime() + 1 * 60 * 60 * 1000); // UTC+1
+  const utc1 = new Date(now.getTime() + 1 * 60 * 60 * 1000); // add 1 hour
 
-  const timestamp = `${utc1.getFullYear()}-${String(utc1.getMonth() + 1).padStart(2,'0')}-${String(utc1.getDate()).padStart(2,'0')};${String(utc1.getHours()).padStart(2,'0')}:${String(utc1.getMinutes()).padStart(2,'0')}:${String(utc1.getSeconds()).padStart(2,'0')}`;
+  const timestamp = `${utc1.getFullYear()}-${String(utc1.getMonth() + 1).padStart(2, '0')}-${String(utc1.getDate()).padStart(2, '0')} ${String(utc1.getHours()).padStart(2, '0')}:${String(utc1.getMinutes()).padStart(2, '0')}:${String(utc1.getSeconds()).padStart(2, '0')}`;
 
-  await sheets.spreadsheets.values.append({
+  // Insert a blank row after the header (row 1)
+  await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
-    range: "Sheet1!D:G",
+    requestBody: {
+      requests: [
+        {
+          insertDimension: {
+            range: {
+              sheetId: 0, // usually 0 for the first sheet
+              dimension: "ROWS",
+              startIndex: 1, // insert just below the header
+              endIndex: 2,
+            },
+            inheritFromBefore: false,
+          },
+        },
+      ],
+    },
+  });
+
+  // Now update that new second row with the answer
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: "Sheet1!C2:F2",
     valueInputOption: "RAW",
-    insertDataOption: "INSERT_ROWS",
     requestBody: {
       values: [[user_name, answer, timestamp, questionText]],
     },

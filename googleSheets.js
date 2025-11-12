@@ -73,7 +73,7 @@ export async function appendAnswerToSheet(user_name, answer, questionText) {
   // Now update that new second row with the answer
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: "Sheet1!C2:F2",
+    range: "Sheet1!D2:G2", // D = Name, E = Answer, F = Time, G = Question
     valueInputOption: "RAW",
     requestBody: {
       values: [[user_name, answer, timestamp, questionText]],

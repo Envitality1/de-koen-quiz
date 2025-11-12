@@ -13,23 +13,32 @@ export const sheets = google.sheets({ version: "v4", auth });
 // Replace with your actual Google Sheet ID
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 
-// Fetch questions and choices from Google Sheets (Sheet: Questions)
+// Fetch questions and choices from Google Sheets
 export async function fetchQuestions() {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: "Questions!A2:B", // A = question, B = multiple-choice
+    range: "Sheet1!A2:B", // Column A = question, B = multiple-choice
   });
 
   const rows = res.data.values || [];
-  return rows.map(row => ({
-    question: row[0],
-    choices: row[1] || null
-  }));
+
+  // Filter out empty questions
+  return rows
+    .filter(row => row[0] && row[0].trim() !== "")
+    .map(row => ({
+      question: row[0].trim(),
+      choices: row[1] ? row[1].trim() : null
+    }));
 }
 
 // Insert questions into DB
 export async function insertQuestionsToDB(pool) {
   const questions = await fetchQuestions();
+
+  if (questions.length === 0) {
+    console.log("⚠️ No valid questions found in the sheet.");
+    return;
+  }
 
   // Reset tables
   await pool.query("TRUNCATE TABLE answers, questions RESTART IDENTITY CASCADE");
@@ -40,9 +49,11 @@ export async function insertQuestionsToDB(pool) {
       [q.question, q.choices]
     );
   }
+
+  console.log(`✅ Inserted ${questions.length} questions into the DB.`);
 }
 
-// Append user answer to the "Answers" sheet (columns A–D)
+// Append user answer to Google Sheets (columns D–G: Name, Answer, Time, Question)
 export async function appendAnswerToSheet(user_name, answer, questionText) {
   // Get current time in UTC+1
   const now = new Date();
@@ -50,7 +61,7 @@ export async function appendAnswerToSheet(user_name, answer, questionText) {
 
   const timestamp = `${utc1.getFullYear()}-${String(utc1.getMonth() + 1).padStart(2, '0')}-${String(utc1.getDate()).padStart(2, '0')} ${String(utc1.getHours()).padStart(2, '0')}:${String(utc1.getMinutes()).padStart(2, '0')}:${String(utc1.getSeconds()).padStart(2, '0')}`;
 
-  // Insert a blank row after the header in the "Answers" sheet
+  // Insert a blank row after header (row 1) to push older answers down
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
     requestBody: {
@@ -58,9 +69,9 @@ export async function appendAnswerToSheet(user_name, answer, questionText) {
         {
           insertDimension: {
             range: {
-              sheetId: 1, // usually 1 if it's the second sheet (Questions = 0, Answers = 1)
+              sheetId: 0, // first sheet
               dimension: "ROWS",
-              startIndex: 1,
+              startIndex: 1, // below header
               endIndex: 2,
             },
             inheritFromBefore: false,
@@ -70,10 +81,10 @@ export async function appendAnswerToSheet(user_name, answer, questionText) {
     },
   });
 
-  // Write the answer to row 2
+  // Update new second row with the answer
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: "Answers!A2:D2", // A = Name, B = Answer, C = Time, D = Question
+    range: "Sheet1!D2:G2", // D = Name, E = Answer, F = Time, G = Question
     valueInputOption: "RAW",
     requestBody: {
       values: [[user_name, answer, timestamp, questionText]],

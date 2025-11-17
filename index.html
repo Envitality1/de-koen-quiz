@@ -2,28 +2,58 @@
 <html>
 <head>
   <title>De Koen Quiz 🎯</title>
-
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     body {
       margin: 0;
       font-family: "Inter", sans-serif;
       background: linear-gradient(135deg, #f0f4ff, #e3ebff);
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
+      padding: 20px;
     }
 
+    .layout {
+      display: flex;
+      gap: 28px;
+      align-items: stretch;
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    /* left ad column */
+    .left-ad {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .left-ad img {
+      width: 100%;
+      max-width: 420px;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(20,30,70,0.15);
+      object-fit: cover;
+    }
+
+    /* right quiz card */
     .quiz-card {
       background: white;
       padding: 35px 40px;
       border-radius: 20px;
-      width: 90%;
-      max-width: 480px;
+      width: 420px;
       box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.15);
       text-align: center;
       animation: fadeIn 0.4s ease;
+    }
+
+    @media (max-width: 880px) {
+      .layout { flex-direction: column-reverse; align-items: center; }
+      .quiz-card { width: 100%; max-width: 600px; }
+      .left-ad img { max-width: 280px; }
     }
 
     @keyframes fadeIn {
@@ -56,12 +86,9 @@
       font-family: inherit;
     }
 
-    input:focus, textarea:focus {
-      border-color: #6b8cff;
-      box-shadow: 0 0 0 3px rgba(107, 140, 255, 0.3);
-    }
-
     textarea { resize: vertical; min-height: 80px; max-height: 250px; }
+
+    input:focus, textarea:focus { border-color: #6b8cff; box-shadow: 0 0 0 3px rgba(107,140,255,0.18); }
 
     #choices button {
       padding: 10px 16px;
@@ -75,10 +102,7 @@
       transition: 0.2s;
     }
 
-    #choices button:hover {
-      background: #c9d5ff;
-      transform: translateY(-2px);
-    }
+    #choices button:hover { background: #c9d5ff; transform: translateY(-2px); }
 
     button.submit-btn {
       width: 100%;
@@ -93,115 +117,113 @@
       transition: 0.2s;
     }
 
-    button.submit-btn:hover {
-      background: #5875e6;
-      transform: translateY(-2px);
-    }
+    button.submit-btn:hover { background: #5875e6; transform: translateY(-2px); }
 
     .credits {
-      position: fixed;
-      bottom: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      text-align: center;
-      font-size: 14px;
+      margin-top: 18px;
+      font-size: 13px;
       color: #4b4b4b;
-      opacity: 0.8;
+      opacity: 0.9;
     }
 
-    /* New Ad styling */
-    #adImage {
-      position: fixed;
-      bottom: 15px;
-      left: 15px;
-      width: 150px;
-      height: auto;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      display: none;
-    }
+    a.sheet-link { color: #2b3a67; text-decoration: underline; font-size: 13px; }
   </style>
 </head>
 <body>
+  <div class="layout">
+    <div class="left-ad">
+      <img id="adImage" src="" alt="Ad image" style="display:none" />
+    </div>
 
-  <div class="quiz-card">
-    <h1>De Koen Quiz</h1>
-    <div id="question">Loading today's question...</div>
-    <div id="choices"></div>
+    <div class="quiz-card">
+      <h1>De Koen Quiz</h1>
 
-    <input id="username" placeholder="Your name" />
-    <textarea id="answer" placeholder="Your answer" rows="3"></textarea>
+      <div id="question">Loading today's question...</div>
+      <div id="choices"></div>
 
-    <button class="submit-btn" onclick="submitAnswer()">Submit</button>
+      <input id="username" placeholder="Your name" />
+      <textarea id="answer" placeholder="Your answer" rows="4"></textarea>
+
+      <button class="submit-btn" onclick="submitAnswer()">Submit</button>
+
+      <div class="credits">
+        <a class="sheet-link" href="#" id="sheetLink" target="_blank">link naar spreadsheet</a><br>
+        website gemaakt door <b>Tamir Boesjes</b><br>
+        vragen door <b>Koen van Dijk</b>
+      </div>
+    </div>
   </div>
-
-  <!-- Credits -->
-  <div class="credits">
-    <a href="https://docs.google.com/spreadsheets/d/1eJLd2rerfazwQDozdF-bKxNfr068Lb6TfOXEwplCElA/edit?gid=0#gid=0">link naar spreadsheet:</a><br>
-    website gemaakt door <b>Tamir Boesjes</b><br>
-    vragen door <b>Koen van Dijk</b>
-  </div>
-
-  <!-- Ad Image -->
-  <img id="adImage" />
 
   <script>
     let currentQuestionId = null;
 
     async function loadQuestion() {
-      const res = await fetch("/question");
-      const data = await res.json();
-      currentQuestionId = data.id;
-
-      document.getElementById("question").innerText = data.question;
-
-      const choicesDiv = document.getElementById("choices");
-      choicesDiv.innerHTML = "";
-
-      if (data.choices) {
-        const choices = data.choices.split(",");
-        choices.forEach(choice => {
-          const btn = document.createElement("button");
-          btn.innerText = choice.trim();
-          btn.onclick = () => document.getElementById("answer").value = choice.trim();
-          choicesDiv.appendChild(btn);
-        });
+      try {
+        const res = await fetch("/question");
+        const data = await res.json();
+        currentQuestionId = data.id;
+        document.getElementById("question").innerText = data.question || "No question found.";
+        const choicesDiv = document.getElementById("choices");
+        choicesDiv.innerHTML = "";
+        if (data.choices) {
+          const choices = data.choices.split(",");
+          choices.forEach(choice => {
+            const btn = document.createElement("button");
+            btn.innerText = choice.trim();
+            btn.onclick = () => document.getElementById("answer").value = choice.trim();
+            choicesDiv.appendChild(btn);
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load question:", err);
       }
     }
 
     async function loadAd() {
-      const res = await fetch("/ad");
-      const data = await res.json();
-      if (data.image) {
-        const adImg = document.getElementById("adImage");
-        adImg.src = data.image;
-        adImg.style.display = "block";
+      try {
+        const res = await fetch("/ad");
+        const json = await res.json();
+        if (json.image) {
+          const ad = document.getElementById("adImage");
+          ad.src = json.image;
+          ad.style.display = "block";
+        }
+      } catch (err) {
+        console.error("Failed to load ad:", err);
       }
     }
 
     async function submitAnswer() {
-      const user = document.getElementById("username").value;
-      const answer = document.getElementById("answer").value;
-
+      const user = document.getElementById("username").value.trim();
+      const answer = document.getElementById("answer").value.trim();
       if (!user || !answer || !currentQuestionId) {
         alert("Please enter your name and answer!");
         return;
       }
 
-      await fetch("/answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_name: user,
-          answer: answer,
-          question_id: currentQuestionId
-        })
-      });
-
-      alert("Answer submitted!");
-      document.getElementById("answer").value = "";
-      document.getElementById("username").value = "";
+      try {
+        const res = await fetch("/answer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_name: user, answer, question_id: currentQuestionId }),
+        });
+        if (res.ok) {
+          alert("Answer submitted!");
+          document.getElementById("answer").value = "";
+          document.getElementById("username").value = "";
+        } else {
+          const data = await res.json();
+          alert("Failed to submit answer: " + (data.error || "unknown"));
+        }
+      } catch (err) {
+        console.error("Submit failed:", err);
+        alert("Failed to submit answer.");
+      }
     }
+
+    // set spreadsheet link if provided via env (optional)
+    const sheetUrl = "https://docs.google.com/spreadsheets/d/" + (typeof SHEET_ID !== "undefined" ? SHEET_ID : "1eJLd2rerfazwQDozdF-bKxNfr068Lb6TfOXEwplCElA");
+    document.getElementById("sheetLink").href = sheetUrl;
 
     loadQuestion();
     loadAd();

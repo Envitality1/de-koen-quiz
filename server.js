@@ -13,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(__dirname)); // serves index.html from project root
+app.use(express.static(__dirname)); // serve index.html
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -23,10 +23,9 @@ const pool = new Pool({
 // ping
 app.get("/ping", (req, res) => res.send("pong"));
 
-// /sync -> sync Questions sheet -> DB (wipes DB questions + answers)
+// sync questions from Google Sheet -> DB
 app.get("/sync", async (req, res) => {
   try {
-    console.log("Manual /sync triggered");
     await insertQuestionsToDB(pool);
     res.redirect("/");
   } catch (err) {
@@ -35,19 +34,18 @@ app.get("/sync", async (req, res) => {
   }
 });
 
-// /syncimg -> sync ad image from Questions!D -> DB (wipes ad_image)
+// sync ad image from Sheet -> DB
 app.get("/syncimg", async (req, res) => {
   try {
-    console.log("Manual /syncimg triggered");
     await syncAdImageToDB(pool);
     res.redirect("/");
   } catch (err) {
-    console.error("syncimg failed:", err);
+    console.error("Sync image failed:", err);
     res.status(500).send("Sync image failed");
   }
 });
 
-// get latest question (last imported)
+// get latest question
 app.get("/question", async (req, res) => {
   try {
     const result = await pool.query("SELECT id, question, choices FROM questions ORDER BY id DESC LIMIT 1");
@@ -71,28 +69,40 @@ app.get("/ad", async (req, res) => {
   }
 });
 
-// post answer -> insert into DB then append to Answers sheet top
+// submit answer with IP restriction
 app.post("/answer", async (req, res) => {
   const { user_name, answer, question_id } = req.body;
-  if (!user_name || !answer || !question_id) return res.status(400).json({ error: "Missing fields" });
+  if (!user_name || !answer || !question_id)
+    return res.status(400).json({ error: "Missing fields" });
+
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
   try {
-    // ensure question exists (defensive)
+    // Check if this IP has already submitted today
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const check = await pool.query(
+      "SELECT * FROM answers WHERE ip_address=$1 AND created_at::date=$2",
+      [ip, today]
+    );
+    if (check.rows.length > 0) {
+      return res.status(403).json({ error: "Je hebt vandaag al een antwoord ingevuld." });
+    }
+
     const qRes = await pool.query("SELECT question FROM questions WHERE id=$1", [question_id]);
     if (!qRes.rows.length) return res.status(400).json({ error: "Invalid question_id" });
     const questionText = qRes.rows[0].question;
 
-    // insert into DB
-    await pool.query("INSERT INTO answers (user_name, answer, question_id) VALUES ($1, $2, $3)", [
-      user_name,
-      answer,
-      question_id,
-    ]);
+    // insert answer
+    await pool.query(
+      "INSERT INTO answers (user_name, answer, question_id, ip_address) VALUES ($1,$2,$3,$4)",
+      [user_name, answer, question_id, ip]
+    );
 
-    // append to sheet (top)
+    // append to Google Sheet
     await appendAnswerToSheet(user_name, answer, questionText);
 
     res.json({ status: "ok" });
+
   } catch (err) {
     console.error("POST /answer error:", err);
     res.status(500).json({ error: "Failed to submit answer" });

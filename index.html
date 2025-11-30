@@ -1,229 +1,104 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>De Koen Quiz 🎯</title>
+  <title>De Koen Quiz 🎄</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body {
-      margin: 0;
-      font-family: "Inter", sans-serif;
-      background: linear-gradient(135deg, #f0f4ff, #e3ebff);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .layout {
-      display: flex;
-      gap: 28px;
-      align-items: stretch;
-      width: 100%;
-      max-width: 1000px;
-    }
-
-    /* left ad column */
-    .left-ad {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .left-ad img {
-      width: 100%;
-      max-width: 420px;
-      border-radius: 16px;
-      box-shadow: 0 8px 30px rgba(20,30,70,0.15);
-      object-fit: cover;
-    }
-
-    /* right quiz card */
-    .quiz-card {
-      background: white;
-      padding: 35px 40px;
-      border-radius: 20px;
-      width: 420px;
-      box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.15);
-      text-align: center;
-      animation: fadeIn 0.4s ease;
-    }
-
-    @media (max-width: 880px) {
-      .layout { flex-direction: column-reverse; align-items: center; }
-      .quiz-card { width: 100%; max-width: 600px; }
-      .left-ad img { max-width: 280px; }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    h1 {
-      margin-top: 0;
-      font-size: 28px;
-      color: #2b3a67;
-    }
-
-    #question {
-      font-size: 20px;
-      margin: 20px 0 25px;
-      color: #324a7a;
-      font-weight: 600;
-    }
-
-    input, textarea {
-      width: 100%;
-      padding: 12px 14px;
-      margin-top: 10px;
-      border-radius: 12px;
-      border: 1px solid #cfd7ea;
-      font-size: 16px;
-      outline: none;
-      transition: 0.2s;
-      font-family: inherit;
-    }
-
-    textarea { resize: vertical; min-height: 80px; max-height: 250px; }
-
-    input:focus, textarea:focus { border-color: #6b8cff; box-shadow: 0 0 0 3px rgba(107,140,255,0.18); }
-
-    #choices button {
-      padding: 10px 16px;
-      margin: 5px;
-      border-radius: 12px;
-      font-size: 15px;
-      border: none;
-      cursor: pointer;
-      background: #dfe7ff;
-      color: #2b3a67;
-      transition: 0.2s;
-    }
-
-    #choices button:hover { background: #c9d5ff; transform: translateY(-2px); }
-
-    button.submit-btn {
-      width: 100%;
-      margin-top: 15px;
-      padding: 14px;
-      border: none;
-      background: #6b8cff;
-      color: white;
-      font-size: 17px;
-      border-radius: 14px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    button.submit-btn:hover { background: #5875e6; transform: translateY(-2px); }
-
-    .credits {
-      margin-top: 18px;
-      font-size: 13px;
-      color: #4b4b4b;
-      opacity: 0.9;
-    }
-
-    a.sheet-link { color: #2b3a67; text-decoration: underline; font-size: 13px; }
+    body { margin:0; font-family:"Inter",sans-serif; background:#f0f4ff; display:flex; justify-content:center; align-items:center; min-height:100vh; }
+    .layout { display:flex; gap:28px; align-items:stretch; width:100%; max-width:1000px; }
+    .left-ad { flex:1; display:flex; align-items:center; justify-content:center; position:relative; }
+    .left-ad img { width:100%; max-width:420px; border-radius:16px; object-fit:cover; }
+    .quiz-card { background:white; padding:35px 40px; border-radius:20px; width:420px; text-align:center; box-shadow:0px 10px 40px rgba(0,0,0,0.15); }
+    h1 { margin-top:0; font-size:28px; color:#2b3a67; }
+    #question { font-size:20px; margin:20px 0 25px; color:#324a7a; font-weight:600; }
+    input, textarea { width:100%; padding:12px 14px; margin-top:10px; border-radius:12px; border:1px solid #cfd7ea; font-size:16px; outline:none; }
+    #choices button { padding:10px 16px; margin:5px; border-radius:12px; border:none; cursor:pointer; background:#dfe7ff; color:#2b3a67; transition:0.2s; }
+    #choices button:hover { background:#c9d5ff; transform:translateY(-2px); }
+    button.submit-btn { width:100%; margin-top:15px; padding:14px; border:none; background:#6b8cff; color:white; font-size:17px; border-radius:14px; cursor:pointer; }
+    button.submit-btn:hover { background:#5875e6; transform:translateY(-2px); }
+    .garlands { position:fixed; top:0; width:100%; height:50px; background:url('garland.png') repeat-x; z-index:1000; }
+    .christmas-tree { position:fixed; left:0; bottom:0; width:150px; }
+    .santa { position:absolute; bottom:50px; right:50px; width:120px; }
   </style>
 </head>
 <body>
+  <div class="garlands"></div>
   <div class="layout">
     <div class="left-ad">
       <img id="adImage" src="" alt="Ad image" style="display:none" />
+      <div class="christmas-tree">
+        <img id="daily-gift" src="gift1.png" width="80" />
+      </div>
+      <img src="breakdance-santa.gif" class="santa" />
     </div>
-
     <div class="quiz-card">
       <h1>De Koen Quiz</h1>
-
       <div id="question">Loading today's question...</div>
       <div id="choices"></div>
-
-      <input id="username" placeholder="Your name" />
-      <textarea id="answer" placeholder="Your answer" rows="4"></textarea>
-
-      <button class="submit-btn" onclick="submitAnswer()">Submit</button>
-
-      <div class="credits">
-        <a class="sheet-link" href="#" id="sheetLink" target="_blank">link naar spreadsheet</a><br>
-        website gemaakt door <b>Tamir Boesjes</b><br>
-        vragen door <b>Koen van Dijk</b>
-      </div>
+      <input id="username" placeholder="Je naam" />
+      <textarea id="answer" placeholder="Je antwoord" rows="4"></textarea>
+      <button class="submit-btn" onclick="submitAnswer()">Verstuur</button>
     </div>
   </div>
+
+  <!-- Music -->
+  <audio id="bgMusic" src="music.mp3" autoplay loop></audio>
+  <button onclick="toggleMusic()">Pause / Play Music</button>
 
   <script>
     let currentQuestionId = null;
 
     async function loadQuestion() {
-      try {
-        const res = await fetch("/question");
-        const data = await res.json();
-        currentQuestionId = data.id;
-        document.getElementById("question").innerText = data.question || "No question found.";
-        const choicesDiv = document.getElementById("choices");
-        choicesDiv.innerHTML = "";
-        if (data.choices) {
-          const choices = data.choices.split(",");
-          choices.forEach(choice => {
-            const btn = document.createElement("button");
-            btn.innerText = choice.trim();
-            btn.onclick = () => document.getElementById("answer").value = choice.trim();
-            choicesDiv.appendChild(btn);
-          });
-        }
-      } catch (err) {
-        console.error("Failed to load question:", err);
+      const res = await fetch("/question");
+      const data = await res.json();
+      currentQuestionId = data.id;
+      document.getElementById("question").innerText = data.question || "Geen vraag gevonden.";
+      const choicesDiv = document.getElementById("choices");
+      choicesDiv.innerHTML = "";
+      if (data.choices) {
+        data.choices.split(",").forEach(choice => {
+          const btn = document.createElement("button");
+          btn.innerText = choice.trim();
+          btn.onclick = () => document.getElementById("answer").value = choice.trim();
+          choicesDiv.appendChild(btn);
+        });
       }
     }
 
     async function loadAd() {
-      try {
-        const res = await fetch("/ad");
-        const json = await res.json();
-        if (json.image) {
-          const ad = document.getElementById("adImage");
-          ad.src = json.image;
-          ad.style.display = "block";
-        }
-      } catch (err) {
-        console.error("Failed to load ad:", err);
+      const res = await fetch("/ad");
+      const json = await res.json();
+      if (json.image) {
+        const ad = document.getElementById("adImage");
+        ad.src = json.image;
+        ad.style.display = "block";
       }
     }
 
     async function submitAnswer() {
       const user = document.getElementById("username").value.trim();
       const answer = document.getElementById("answer").value.trim();
-      if (!user || !answer || !currentQuestionId) {
-        alert("Please enter your name and answer!");
-        return;
-      }
+      if (!user || !answer || !currentQuestionId) { alert("Vul je naam en antwoord in!"); return; }
 
-      try {
-        const res = await fetch("/answer", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_name: user, answer, question_id: currentQuestionId }),
-        });
-        if (res.ok) {
-          alert("Answer submitted!");
-          document.getElementById("answer").value = "";
-          document.getElementById("username").value = "";
-        } else {
-          const data = await res.json();
-          alert("Failed to submit answer: " + (data.error || "unknown"));
-        }
-      } catch (err) {
-        console.error("Submit failed:", err);
-        alert("Failed to submit answer.");
-      }
+      const res = await fetch("/answer", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({user_name:user, answer, question_id:currentQuestionId})
+      });
+      const data = await res.json();
+      if(res.ok) { alert("Antwoord verstuurd!"); document.getElementById("answer").value=""; document.getElementById("username").value=""; }
+      else alert("Fout bij versturen: "+(data.error||"onbekend"));
     }
 
-    // set spreadsheet link if provided via env (optional)
-    const sheetUrl = "https://docs.google.com/spreadsheets/d/" + (typeof SHEET_ID !== "undefined" ? SHEET_ID : "1eJLd2rerfazwQDozdF-bKxNfr068Lb6TfOXEwplCElA");
-    document.getElementById("sheetLink").href = sheetUrl;
+    function toggleMusic() {
+      const music = document.getElementById("bgMusic");
+      if(music.paused) music.play(); else music.pause();
+    }
+
+    // Daily gift logic
+    const gifts = ["gift1.png","gift2.png","gift3.png","gift4.png"];
+    const today = new Date().getDate();
+    document.getElementById("daily-gift").src = gifts[(today-1)%gifts.length];
 
     loadQuestion();
     loadAd();

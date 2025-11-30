@@ -11,19 +11,25 @@ const { Pool } = pkg;
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(__dirname)); // serve index.html
 
+// Serve all static files from 'public' folder
+app.use(express.static(path.join(__dirname, "public")));
+
+// Database setup
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
 
+// Routes
+
 // ping
 app.get("/ping", (req, res) => res.send("pong"));
 
-// sync questions from Google Sheet -> DB
+// Sync questions from Google Sheets -> DB
 app.get("/sync", async (req, res) => {
   try {
     await insertQuestionsToDB(pool);
@@ -34,7 +40,7 @@ app.get("/sync", async (req, res) => {
   }
 });
 
-// sync ad image from Sheet -> DB
+// Sync ad image
 app.get("/syncimg", async (req, res) => {
   try {
     await syncAdImageToDB(pool);
@@ -45,10 +51,12 @@ app.get("/syncimg", async (req, res) => {
   }
 });
 
-// get latest question
+// Get latest question
 app.get("/question", async (req, res) => {
   try {
-    const result = await pool.query("SELECT id, question, choices FROM questions ORDER BY id DESC LIMIT 1");
+    const result = await pool.query(
+      "SELECT id, question, choices FROM questions ORDER BY id DESC LIMIT 1"
+    );
     const row = result.rows[0];
     if (!row) return res.json({ id: null, question: "No questions available", choices: null });
     res.json({ id: row.id, question: row.question, choices: row.choices });
@@ -58,7 +66,7 @@ app.get("/question", async (req, res) => {
   }
 });
 
-// get latest ad
+// Get latest ad image
 app.get("/ad", async (req, res) => {
   try {
     const result = await pool.query("SELECT url FROM ad_image ORDER BY id DESC LIMIT 1");
@@ -69,7 +77,7 @@ app.get("/ad", async (req, res) => {
   }
 });
 
-// submit answer with IP restriction
+// Submit answer with IP restriction
 app.post("/answer", async (req, res) => {
   const { user_name, answer, question_id } = req.body;
   if (!user_name || !answer || !question_id)
@@ -78,8 +86,7 @@ app.post("/answer", async (req, res) => {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
   try {
-    // Check if this IP has already submitted today
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const today = new Date().toISOString().slice(0, 10);
     const check = await pool.query(
       "SELECT * FROM answers WHERE ip_address=$1 AND created_at::date=$2",
       [ip, today]
@@ -92,22 +99,25 @@ app.post("/answer", async (req, res) => {
     if (!qRes.rows.length) return res.status(400).json({ error: "Invalid question_id" });
     const questionText = qRes.rows[0].question;
 
-    // insert answer
     await pool.query(
       "INSERT INTO answers (user_name, answer, question_id, ip_address) VALUES ($1,$2,$3,$4)",
       [user_name, answer, question_id, ip]
     );
 
-    // append to Google Sheet
     await appendAnswerToSheet(user_name, answer, questionText);
 
     res.json({ status: "ok" });
-
   } catch (err) {
     console.error("POST /answer error:", err);
     res.status(500).json({ error: "Failed to submit answer" });
   }
 });
 
+// Serve index.html on root path
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Start server
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`✅ De Koen Quiz server running on port ${port}`));

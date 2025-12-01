@@ -17,7 +17,6 @@
       overflow: hidden;
     }
 
-    /* Christmas decorations */
     .garland {
       position: absolute;
       top: 0;
@@ -70,15 +69,15 @@
       position: relative;
     }
 
-    /* left ad column */
-    .left-ad {
+    /* LEFT IMAGE COLUMN (was .left-ad) */
+    .promo-box {
       flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .left-ad img {
+    .promo-box img {
       width: 100%;
       max-width: 420px;
       border-radius: 16px;
@@ -86,7 +85,7 @@
       object-fit: cover;
     }
 
-    /* right quiz card */
+    /* QUIZ CARD */
     .quiz-card {
       background: white;
       padding: 35px 40px;
@@ -101,7 +100,7 @@
     @media (max-width: 880px) {
       .layout { flex-direction: column-reverse; align-items: center; }
       .quiz-card { width: 100%; max-width: 600px; }
-      .left-ad img { max-width: 280px; }
+      .promo-box img { max-width: 280px; }
     }
 
     @keyframes fadeIn {
@@ -188,12 +187,11 @@
   <!-- Autoplay Christmas music -->
   <audio autoplay loop>
     <source src="music/christmas-music.mp3" type="audio/mpeg">
-    Your browser does not support the audio element.
   </audio>
 
   <div class="layout">
-    <div class="left-ad">
-      <img id="adImage" src="" alt="Ad image" style="display:none" />
+    <div class="promo-box">
+      <img id="promoImage" src="" alt="" style="display:none" />
     </div>
 
     <div class="quiz-card">
@@ -223,15 +221,19 @@
         const res = await fetch("/question");
         const data = await res.json();
         currentQuestionId = data.id;
-        document.getElementById("question").innerText = data.question || "No question found.";
+
+        document.getElementById("question").innerText =
+          data.question || "No question found.";
+
         const choicesDiv = document.getElementById("choices");
         choicesDiv.innerHTML = "";
+
         if (data.choices) {
-          const choices = data.choices.split(",");
-          choices.forEach(choice => {
+          data.choices.split(",").forEach(choice => {
             const btn = document.createElement("button");
             btn.innerText = choice.trim();
-            btn.onclick = () => document.getElementById("answer").value = choice.trim();
+            btn.onclick = () =>
+              (document.getElementById("answer").value = choice.trim());
             choicesDiv.appendChild(btn);
           });
         }
@@ -240,23 +242,25 @@
       }
     }
 
-    async function loadAd() {
+    async function loadPromo() {
       try {
-        const res = await fetch("/ad");
+        const res = await fetch("/promo");
         const json = await res.json();
+
         if (json.image) {
-          const ad = document.getElementById("adImage");
-          ad.src = json.image;
-          ad.style.display = "block";
+          const img = document.getElementById("promoImage");
+          img.src = json.image;
+          img.style.display = "block";
         }
       } catch (err) {
-        console.error("Failed to load ad:", err);
+        console.error("Failed to load image:", err);
       }
     }
 
     async function submitAnswer() {
       const user = document.getElementById("username").value.trim();
       const answer = document.getElementById("answer").value.trim();
+
       if (!user || !answer || !currentQuestionId) {
         alert("Please enter your name and answer!");
         return;
@@ -266,28 +270,33 @@
         const res = await fetch("/answer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_name: user, answer, question_id: currentQuestionId }),
+          body: JSON.stringify({
+            user_name: user,
+            answer,
+            question_id: currentQuestionId,
+          }),
         });
+
+        const data = await res.json();
+
         if (res.ok) {
           alert("Answer submitted!");
           document.getElementById("answer").value = "";
           document.getElementById("username").value = "";
         } else {
-          const data = await res.json();
-          alert("Failed to submit answer: " + (data.error || "unknown"));
+          alert("Failed: " + (data.error || "unknown"));
         }
       } catch (err) {
-        console.error("Submit failed:", err);
+        console.error(err);
         alert("Failed to submit answer.");
       }
     }
 
-    // Set spreadsheet link (optional)
-    const sheetUrl = "https://docs.google.com/spreadsheets/d/" + (typeof SHEET_ID !== "undefined" ? SHEET_ID : "1eJLd2rerfazwQDozdF-bKxNfr068Lb6TfOXEwplCElA");
-    document.getElementById("sheetLink").href = sheetUrl;
+    document.getElementById("sheetLink").href =
+      "https://docs.google.com/spreadsheets/d/1eJLd2rerfazwQDozdF-bKxNfr068Lb6TfOXEwplCElA";
 
     loadQuestion();
-    loadAd();
+    loadPromo();
   </script>
 </body>
 </html>

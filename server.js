@@ -67,13 +67,13 @@ app.get("/question", async (req, res) => {
 });
 
 // Get latest ad image
-app.get("/ad", async (req, res) => {
+app.get("/promo", async (req, res) => {
   try {
     const result = await pool.query("SELECT url FROM ad_image ORDER BY id DESC LIMIT 1");
     res.json({ image: result.rows[0]?.url || null });
   } catch (err) {
-    console.error("GET /ad error:", err);
-    res.status(500).json({ error: "Failed to fetch ad" });
+    console.error("GET /promo error:", err);
+    res.status(500).json({ error: "Failed to fetch promo image" });
   }
 });
 

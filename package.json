@@ -11,9 +11,10 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.19.2",
-    "pg": "^8.11.3",
+    "express-session": "^1.17.3",
+    "googleapis": "^118.0.0",
     "node-cron": "^3.0.2",
-    "googleapis": "^118.0.0"
+    "pg": "^8.11.3"
   },
   "engines": {
     "node": ">=18"

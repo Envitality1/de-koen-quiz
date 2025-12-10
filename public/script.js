@@ -39,13 +39,13 @@ async function submitAnswer() {
   alert(res.ok ? "Submitted!" : "Failed.");
 }
 
-// Notepad persistence
-const noteArea = document.getElementById("noteArea");
-noteArea.value = localStorage.getItem("announcement_text") || "";
+async function loadAnnouncement() {
+  const res = await fetch("/announcement");
+  const data = await res.json();
+  document.getElementById("announcementBox").innerText = data.text || "";
+}
 
-noteArea.addEventListener("input", () => {
-  localStorage.setItem("announcement_text", noteArea.value);
-});
+loadAnnouncement();
 
 
 loadQuestion();

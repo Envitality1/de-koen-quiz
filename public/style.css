@@ -33,49 +33,18 @@ body {
   border: 3px solid red;
 }
 
-.notepad {
-  background: #fffdf5; /* paper-like color */
-  border: 3px solid red;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-  width: 300px;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.notepad-header {
-  text-align: center;
-  font-weight: bold;
-  font-size: 18px;
-  color: red;
-  border-bottom: 1px dashed #e0c0c0;
-  padding-bottom: 5px;
-}
-
-.notepad textarea {
-  width: 100%;
-  min-height: 300px;
-  resize: vertical;
-  padding: 12px;
-  border-radius: 8px;
+.announcement-box {
+  white-space: pre-wrap;
+  background: #fff7f7;
   border: 1px solid #ffcccc;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent,
-    transparent 24px,
-    #e0c0c0 25px
-  ); /* subtle lines */
-  font-family: "Courier New", monospace;
-  font-size: 15px;
-  outline: none;
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 300px;
+  font-size: 16px;
+  color: #a60000;
+  user-select: text;
 }
 
-.notepad textarea:focus {
-  border-color: red;
-  box-shadow: 0 0 0 3px rgba(255,0,0,0.2);
-}
 
 
 @media (max-width: 880px) {

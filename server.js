@@ -136,6 +136,34 @@ app.get("/syncimg", async (req, res) => {
   }
 });
 
+// --- ANNOUNCEMENT ROUTES ---
+
+// get announcement for everyone
+app.get("/announcement", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT text FROM announcements ORDER BY id ASC LIMIT 1");
+    res.json({ text: result.rows[0]?.text || "" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch announcement" });
+  }
+});
+
+// update announcement (admin only)
+app.post("/announcement", async (req, res) => {
+  if (!req.session.admin) return res.status(401).json({ error: "Unauthorized" });
+
+  const { text } = req.body;
+
+  try {
+    await pool.query("UPDATE announcements SET text=$1 WHERE id=1", [text]);
+    res.json({ status: "ok" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update announcement" });
+  }
+});
+
 // --- START SERVER ---
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`✅ Server running on port ${port}`));

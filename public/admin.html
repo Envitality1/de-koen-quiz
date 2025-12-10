@@ -17,7 +17,7 @@
 
       <h1>Announcements</h1>
       <textarea id="announcement" placeholder="Write announcements here..."></textarea>
-      <button onclick="updateAnnouncement()">Save Announcement</button>
+      <button onclick="saveAnnouncement()">Save Announcement</button>
     </div>
 
   </div>
@@ -41,20 +41,26 @@
       }
     }
 
-    async function updateAnnouncement() {
-      const announcement = document.getElementById("announcement").value.trim();
-      try {
-        const res = await fetch("/admin/update-announcement", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ announcement })
-        });
-        if (res.ok) alert("Announcement updated!");
-        else alert("Failed to update.");
-      } catch (err) {
-        alert("Error saving announcement.");
-      }
-    }
+    async function loadAnnouncement() {
+  const res = await fetch("/announcement");
+  const data = await res.json();
+  document.getElementById("announcementInput").value = data.text || "";
+}
+
+async function saveAnnouncement() {
+  const text = document.getElementById("announcementInput").value;
+
+  const res = await fetch("/announcement", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text })
+  });
+
+  alert(res.ok ? "Announcement saved!" : "Failed to save");
+}
+
+loadAnnouncement();
+
   </script>
 </body>
 </html>

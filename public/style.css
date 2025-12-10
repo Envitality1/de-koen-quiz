@@ -1,108 +1,72 @@
 body {
   margin: 0;
   font-family: "Inter", sans-serif;
-  background: #fff;
+  background: linear-gradient(135deg, #fff0f0, #ffeaea);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   min-height: 100vh;
   padding: 20px;
+  position: relative;
+  overflow: hidden;
 }
 
-.layout {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-  justify-content: center;
-  width: 100%;
-  max-width: 1100px;
-}
+/* Garland & Presents */
+.garland { position: absolute; top: 0; width: 100%; height: 60px; background: repeating-linear-gradient(45deg, red, red 10px, white 10px, white 20px); z-index: 1; }
+.presents { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 1; }
+.present { width: 50px; height: 50px; background: red; border: 3px solid white; border-radius: 8px; animation: bounce 2s infinite alternate; }
+.present:nth-child(2) { background: #ff5555; animation-delay: 0.2s; }
+.present:nth-child(3) { background: #ff7777; animation-delay: 0.4s; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
 
-/* Quiz Card */
+/* Layout */
+.layout { display: flex; gap: 28px; justify-content: center; width: 100%; max-width: 1000px; z-index: 2; }
+
 .quiz-card {
   background: white;
   padding: 35px 40px;
   border-radius: 20px;
   width: 420px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.15);
   text-align: center;
+  animation: fadeIn 0.4s ease;
   border: 3px solid red;
 }
 
-.quiz-card h1 { color: red; margin-top: 0; font-size: 28px; }
-
-#question { font-size: 20px; margin: 20px 0 25px; color: #a60000; font-weight: 600; }
-
-input, textarea {
-  width: 100%;
-  padding: 12px 14px;
-  margin-top: 10px;
-  border-radius: 12px;
-  border: 1px solid #ffcccc;
-  font-size: 16px;
-  outline: none;
-  font-family: inherit;
-}
-
-textarea { resize: vertical; min-height: 80px; max-height: 250px; }
-
-input:focus, textarea:focus { border-color: red; box-shadow: 0 0 0 3px rgba(255,0,0,0.2); }
-
-#choices button {
-  padding: 10px 16px;
-  margin: 5px;
-  border-radius: 12px;
-  font-size: 15px;
-  border: none;
-  cursor: pointer;
-  background: #ffeaea;
-  color: red;
-  transition: 0.2s;
-}
-
-#choices button:hover { background: #ffd6d6; transform: translateY(-2px); }
-
-button.submit-btn {
-  width: 100%;
-  margin-top: 15px;
-  padding: 14px;
-  border: none;
-  background: red;
-  color: white;
-  font-size: 17px;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-button.submit-btn:hover { background: #a60000; transform: translateY(-2px); }
-
-/* Notepad */
 .notepad {
+  background: #fff7f7;
+  padding: 20px;
+  border-radius: 20px;
   width: 300px;
-  min-width: 220px;
-  display: flex;
-  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  border: 3px solid red;
+  animation: fadeIn 0.4s ease;
 }
-
-.notepad h3 { margin-top: 0; margin-bottom: 8px; color: #a60000; }
-.notepad textarea {
-  flex: 1;
-  height: 100%;
-  min-height: 250px;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid #ffcccc;
-  font-size: 14px;
-  font-family: inherit;
-}
-
-/* Credits */
-.credits { margin-top: 18px; font-size: 13px; color: #4b4b4b; opacity: 0.9; }
-a.sheet-link { color: red; text-decoration: underline; font-size: 13px; }
+.notepad h3 { text-align: center; margin: 0 0 10px; color: red; font-size: 20px; }
+#noteArea { width: 100%; height: 300px; resize: vertical; padding: 12px; font-size: 15px; border-radius: 12px; border: 1px solid #ffcccc; outline: none; }
+#noteArea:focus { border-color: red; box-shadow: 0 0 0 3px rgba(255,0,0,0.2); }
 
 @media (max-width: 880px) {
   .layout { flex-direction: column; align-items: center; }
-  .quiz-card, .notepad { width: 100%; max-width: 600px; }
-  .notepad { margin-top: 20px; }
+  .quiz-card, .notepad { width: 90%; max-width: 600px; }
 }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+h1 { margin-top: 0; font-size: 28px; color: red; }
+#question { font-size: 20px; margin: 20px 0 25px; color: #a60000; font-weight: 600; }
+
+input, textarea { width: 100%; padding: 12px 14px; margin-top: 10px; border-radius: 12px; border: 1px solid #ffcccc; font-size: 16px; outline: none; transition: 0.2s; font-family: inherit; }
+textarea { min-height: 80px; max-height: 250px; }
+input:focus, textarea:focus { border-color: red; box-shadow: 0 0 0 3px rgba(255,0,0,0.2); }
+
+#choices button { padding: 10px 16px; margin: 5px; border-radius: 12px; font-size: 15px; border: none; cursor: pointer; background: #ffeaea; color: red; transition: 0.2s; }
+#choices button:hover { background: #ffd6d6; transform: translateY(-2px); }
+
+button.submit-btn { width: 100%; margin-top: 15px; padding: 14px; border: none; background: red; color: white; font-size: 17px; border-radius: 14px; cursor: pointer; transition: 0.2s; }
+button.submit-btn:hover { background: #a60000; transform: translateY(-2px); }
+
+.credits { margin-top: 18px; font-size: 13px; opacity: 0.9; color: #4b4b4b; }
+a.sheet-link { color: red; text-decoration: underline; font-size: 13px; }
+
+.snow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 9999; }

@@ -1,13 +1,16 @@
 let currentQuestionId = null;
 
+// Load the latest question
 async function loadQuestion() {
   try {
     const res = await fetch("/question");
     const data = await res.json();
     currentQuestionId = data.id;
-    document.getElementById("question").innerText = data.question;
+    document.getElementById("question").innerText = data.question || "No question found.";
+
     const choicesDiv = document.getElementById("choices");
     choicesDiv.innerHTML = "";
+
     if (data.choices) {
       data.choices.split(",").forEach(choice => {
         const btn = document.createElement("button");
@@ -17,41 +20,30 @@ async function loadQuestion() {
       });
     }
   } catch (err) {
-    console.error("Failed to load question:", err);
-  }
-}
-
-async function loadAnnouncement() {
-  try {
-    const res = await fetch("/announcement");
-    const data = await res.json();
-    document.getElementById("noteArea").value = data.text;
-  } catch (err) {
     console.error(err);
   }
 }
 
+// Submit the user's answer
 async function submitAnswer() {
   const user = document.getElementById("username").value.trim();
   const answer = document.getElementById("answer").value.trim();
-  if (!user || !answer) return alert("Please enter your name and answer!");
+  if (!user || !answer) { alert("Fill everything in."); return; }
 
-  try {
-    const res = await fetch("/answer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_name: user, answer }),
-    });
-    if (res.ok) {
-      alert("Answer submitted!");
-      document.getElementById("username").value = "";
-      document.getElementById("answer").value = "";
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Failed to submit answer.");
-  }
+  const res = await fetch("/answer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_name: user, answer, question_id: currentQuestionId })
+  });
+
+  alert(res.ok ? "Submitted!" : "Failed.");
 }
 
+// Notepad persistence
+const noteArea = document.getElementById("noteArea");
+noteArea.value = localStorage.getItem("announcement_text") || "";
+noteArea.addEventListener("input", () => {
+  localStorage.setItem("announcement_text", noteArea.value);
+});
+
 loadQuestion();
-loadAnnouncement();

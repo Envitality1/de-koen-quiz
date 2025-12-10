@@ -42,8 +42,10 @@ async function submitAnswer() {
 // Notepad persistence
 const noteArea = document.getElementById("noteArea");
 noteArea.value = localStorage.getItem("announcement_text") || "";
+
 noteArea.addEventListener("input", () => {
   localStorage.setItem("announcement_text", noteArea.value);
 });
+
 
 loadQuestion();

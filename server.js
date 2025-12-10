@@ -1,123 +1,141 @@
-import 'dotenv/config';
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import pkg from "pg";
 import path from "path";
+import session from "express-session";
 import { fileURLToPath } from "url";
-import { insertQuestionsToDB, appendAnswerToSheet, syncAdImageToDB } from "./googleSheets.js";
+import {
+  insertQuestionsToDB,
+  appendAnswerToSheet,
+  syncAdImageToDB,
+} from "./googleSheets.js";
 
 const { Pool } = pkg;
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Middleware
+// --- CONFIG ---
+const ADMIN_USER = process.env.ADMIN_USER;
+const ADMIN_PASS = process.env.ADMIN_PASS;
+const SESSION_SECRET = process.env.SESSION_SECRET || "secret";
+const DATABASE_URL = process.env.DATABASE_URL;
+
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, "public"))); // serve your public folder
 
-// Serve all static files from 'public' folder
-app.use(express.static(path.join(__dirname, "public")));
+// sessions for admin login
+app.use(
+  session({
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
 
-// Database setup
+// --- POSTGRES ---
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
 
-// Routes
+// --- ROUTES ---
 
 // ping
 app.get("/ping", (req, res) => res.send("pong"));
 
-// Sync questions from Google Sheets -> DB
-app.get("/sync", async (req, res) => {
-  try {
-    await insertQuestionsToDB(pool);
-    res.redirect("/");
-  } catch (err) {
-    console.error("Sync failed:", err);
-    res.status(500).send("Sync failed");
-  }
-});
-
-// Sync ad image
-app.get("/syncimg", async (req, res) => {
-  try {
-    await syncAdImageToDB(pool);
-    res.redirect("/");
-  } catch (err) {
-    console.error("Sync image failed:", err);
-    res.status(500).send("Sync image failed");
-  }
-});
-
-// Get latest question
+// get latest question
 app.get("/question", async (req, res) => {
   try {
     const result = await pool.query(
       "SELECT id, question, choices FROM questions ORDER BY id DESC LIMIT 1"
     );
     const row = result.rows[0];
-    if (!row) return res.json({ id: null, question: "No questions available", choices: null });
+    if (!row)
+      return res.json({ id: null, question: "No questions available", choices: null });
     res.json({ id: row.id, question: row.question, choices: row.choices });
   } catch (err) {
-    console.error("GET /question error:", err);
+    console.error(err);
     res.status(500).json({ error: "Failed to fetch question" });
   }
 });
 
-// Get latest ad image
-app.get("/promo", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT url FROM ad_image ORDER BY id DESC LIMIT 1");
-    res.json({ image: result.rows[0]?.url || null });
-  } catch (err) {
-    console.error("GET /promo error:", err);
-    res.status(500).json({ error: "Failed to fetch promo image" });
-  }
-});
-
-// Submit answer with IP restriction
+// submit answer
 app.post("/answer", async (req, res) => {
   const { user_name, answer, question_id } = req.body;
   if (!user_name || !answer || !question_id)
     return res.status(400).json({ error: "Missing fields" });
 
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
   try {
     const today = new Date().toISOString().slice(0, 10);
     const check = await pool.query(
       "SELECT * FROM answers WHERE ip_address=$1 AND created_at::date=$2",
       [ip, today]
     );
-    if (check.rows.length > 0) {
+    if (check.rows.length > 0)
       return res.status(403).json({ error: "Je hebt vandaag al een antwoord ingevuld." });
-    }
 
-    const qRes = await pool.query("SELECT question FROM questions WHERE id=$1", [question_id]);
+    const qRes = await pool.query("SELECT question FROM questions WHERE id=$1", [
+      question_id,
+    ]);
     if (!qRes.rows.length) return res.status(400).json({ error: "Invalid question_id" });
-    const questionText = qRes.rows[0].question;
 
     await pool.query(
       "INSERT INTO answers (user_name, answer, question_id, ip_address) VALUES ($1,$2,$3,$4)",
       [user_name, answer, question_id, ip]
     );
 
-    await appendAnswerToSheet(user_name, answer, questionText);
+    await appendAnswerToSheet(user_name, answer, qRes.rows[0].question);
 
     res.json({ status: "ok" });
   } catch (err) {
-    console.error("POST /answer error:", err);
+    console.error(err);
     res.status(500).json({ error: "Failed to submit answer" });
   }
 });
 
-// Serve index.html on root path
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+// --- ADMIN LOGIN ---
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
-// Start server
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    req.session.admin = true;
+    return res.json({ status: "ok" });
+  }
+  res.status(401).json({ error: "Invalid credentials" });
+});
+
+app.get("/admin", (req, res) => {
+  if (!req.session.admin) return res.status(401).send("Unauthorized");
+  res.sendFile(path.join(__dirname, "public", "admin.html"));
+});
+
+// --- SYNC ROUTES (optional) ---
+app.get("/sync", async (req, res) => {
+  try {
+    await insertQuestionsToDB(pool);
+    res.redirect("/admin");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Sync failed");
+  }
+});
+
+app.get("/syncimg", async (req, res) => {
+  try {
+    await syncAdImageToDB(pool);
+    res.redirect("/admin");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Sync image failed");
+  }
+});
+
+// --- START SERVER ---
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`✅ De Koen Quiz server running on port ${port}`));
+app.listen(port, () => console.log(`✅ Server running on port ${port}`));

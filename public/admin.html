@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - De Koen Quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="layout">
+
+    <div class="card">
+      <h1>Update Question</h1>
+      <input id="question" placeholder="New question">
+      <textarea id="choices" placeholder="Choices (comma separated)"></textarea>
+      <button onclick="updateQuestion()">Save Question</button>
+
+      <h1>Announcements</h1>
+      <textarea id="announcement" placeholder="Write announcements here..."></textarea>
+      <button onclick="updateAnnouncement()">Save Announcement</button>
+    </div>
+
+  </div>
+
+  <script>
+    async function updateQuestion() {
+      const question = document.getElementById("question").value.trim();
+      const choices = document.getElementById("choices").value.trim();
+      if (!question) return alert("Question cannot be empty.");
+
+      try {
+        const res = await fetch("/admin/update-question", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question, choices })
+        });
+        if (res.ok) alert("Question updated!");
+        else alert("Failed to update.");
+      } catch (err) {
+        alert("Error saving question.");
+      }
+    }
+
+    async function updateAnnouncement() {
+      const announcement = document.getElementById("announcement").value.trim();
+      try {
+        const res = await fetch("/admin/update-announcement", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ announcement })
+        });
+        if (res.ok) alert("Announcement updated!");
+        else alert("Failed to update.");
+      } catch (err) {
+        alert("Error saving announcement.");
+      }
+    }
+  </script>
+</body>
+</html>

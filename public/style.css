@@ -1,84 +1,38 @@
-/* GENERAL PAGE STYLE */
 body {
   margin: 0;
   font-family: "Inter", sans-serif;
-  background: linear-gradient(135deg, #fff0f0, #ffeaea);
+  background: #fff;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   min-height: 100vh;
   padding: 20px;
-  position: relative;
-  overflow: hidden;
 }
 
-/* Garland on top */
-.garland {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  height: 60px;
-  background: repeating-linear-gradient(
-    45deg,
-    red,
-    red 10px,
-    white 10px,
-    white 20px
-  );
-  z-index: 1;
-}
-
-/* Presents at the bottom */
-.presents {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+.layout {
   display: flex;
-  gap: 15px;
+  gap: 20px;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  max-width: 1100px;
 }
 
-.present {
-  width: 50px;
-  height: 50px;
-  background: red;
-  border: 3px solid white;
-  border-radius: 8px;
-  position: relative;
-  animation: bounce 2s infinite alternate;
-}
-
-.present:nth-child(2) { background: #ff5555; animation-delay: 0.2s; }
-.present:nth-child(3) { background: #ff7777; animation-delay: 0.4s; }
-
-@keyframes bounce {
-  from { transform: translateY(0); }
-  to { transform: translateY(-10px); }
-}
-
-/* QUIZ AND ADMIN CARDS */
-.card {
+/* Quiz Card */
+.quiz-card {
   background: white;
   padding: 35px 40px;
   border-radius: 20px;
   width: 420px;
-  box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
   text-align: center;
   border: 3px solid red;
-  animation: fadeIn 0.4s ease;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+.quiz-card h1 { color: red; margin-top: 0; font-size: 28px; }
 
-h1, h3 {
-  color: red;
-  margin-top: 0;
-}
+#question { font-size: 20px; margin: 20px 0 25px; color: #a60000; font-weight: 600; }
 
-/* Input fields */
 input, textarea {
   width: 100%;
   padding: 12px 14px;
@@ -87,70 +41,68 @@ input, textarea {
   border: 1px solid #ffcccc;
   font-size: 16px;
   outline: none;
-  transition: 0.2s;
   font-family: inherit;
 }
 
 textarea { resize: vertical; min-height: 80px; max-height: 250px; }
 
-input:focus, textarea:focus {
-  border-color: red;
-  box-shadow: 0 0 0 3px rgba(255,0,0,0.2);
-}
+input:focus, textarea:focus { border-color: red; box-shadow: 0 0 0 3px rgba(255,0,0,0.2); }
 
-/* Buttons */
-button {
+#choices button {
   padding: 10px 16px;
-  margin-top: 12px;
+  margin: 5px;
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 15px;
   border: none;
   cursor: pointer;
-  background: red;
-  color: white;
+  background: #ffeaea;
+  color: red;
   transition: 0.2s;
 }
 
-button:hover { background: #a60000; transform: translateY(-2px); }
+#choices button:hover { background: #ffd6d6; transform: translateY(-2px); }
 
-/* Layout */
-.layout {
-  display: flex;
-  gap: 28px;
-  align-items: center;
-  justify-content: center;
+button.submit-btn {
   width: 100%;
-  max-width: 1000px;
-  z-index: 2;
-  position: relative;
+  margin-top: 15px;
+  padding: 14px;
+  border: none;
+  background: red;
+  color: white;
+  font-size: 17px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-/* Notepad for announcements */
+button.submit-btn:hover { background: #a60000; transform: translateY(-2px); }
+
+/* Notepad */
 .notepad {
+  width: 300px;
+  min-width: 220px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  flex: 1;
 }
 
+.notepad h3 { margin-top: 0; margin-bottom: 8px; color: #a60000; }
 .notepad textarea {
-  min-height: 200px;
+  flex: 1;
+  height: 100%;
+  min-height: 250px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #ffcccc;
   font-size: 14px;
-  margin-top: 10px;
+  font-family: inherit;
 }
 
 /* Credits */
-.credits {
-  margin-top: 18px;
-  font-size: 13px;
-  color: #4b4b4b;
-  opacity: 0.9;
-}
-
+.credits { margin-top: 18px; font-size: 13px; color: #4b4b4b; opacity: 0.9; }
 a.sheet-link { color: red; text-decoration: underline; font-size: 13px; }
 
-/* Responsive */
 @media (max-width: 880px) {
-  .layout { flex-direction: column; }
-  .card { width: 90%; max-width: 600px; }
+  .layout { flex-direction: column; align-items: center; }
+  .quiz-card, .notepad { width: 100%; max-width: 600px; }
+  .notepad { margin-top: 20px; }
 }

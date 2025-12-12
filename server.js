@@ -136,31 +136,40 @@ app.get("/syncimg", async (req, res) => {
   }
 });
 
-// --- ANNOUNCEMENT ROUTES ---
+// === ANNOUNCEMENTS ===
 
-// get announcement for everyone
-app.get("/announcement", async (req, res) => {
+// Get announcement
+app.get("/announcements", async (req, res) => {
   try {
-    const result = await pool.query("SELECT text FROM announcements ORDER BY id ASC LIMIT 1");
-    res.json({ text: result.rows[0]?.text || "" });
+    const result = await pool.query(
+      "SELECT content FROM my_schema.announcements ORDER BY updated_at DESC LIMIT 1"
+    );
+
+    if (result.rows.length === 0)
+      return res.json({ content: "" });
+
+    res.json({ content: result.rows[0].content });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to fetch announcement" });
+    res.status(500).json({ error: "Failed to load announcement" });
   }
 });
 
-// update announcement (admin only)
-app.post("/announcement", async (req, res) => {
-  if (!req.session.admin) return res.status(401).json({ error: "Unauthorized" });
-
-  const { text } = req.body;
-
+// Update announcement – admin only
+// Get announcement
+app.get("/announcements", async (req, res) => {
   try {
-    await pool.query("UPDATE announcements SET text=$1 WHERE id=1", [text]);
-    res.json({ status: "ok" });
+    const result = await pool.query(
+      "SELECT content FROM my_schema.announcements ORDER BY updated_at DESC LIMIT 1"
+    );
+
+    if (result.rows.length === 0)
+      return res.json({ content: "" });
+
+    res.json({ content: result.rows[0].content });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to update announcement" });
+    res.status(500).json({ error: "Failed to load announcement" });
   }
 });
 

@@ -40,12 +40,26 @@ async function submitAnswer() {
 }
 
 async function loadAnnouncement() {
-  const res = await fetch("/announcement");
+  const res = await fetch("/announcements");
   const data = await res.json();
-  document.getElementById("announcementBox").innerText = data.text || "";
+  document.getElementById("announceInput").value = data.content || "";
+}
+
+async function saveAnnouncement() {
+  const content = document.getElementById("announceInput").value;
+
+  const res = await fetch("/announcements", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content })
+  });
+
+  document.getElementById("msg").innerText =
+    res.ok ? "Saved!" : "Failed to save.";
 }
 
 loadAnnouncement();
+
 
 
 loadQuestion();

@@ -138,22 +138,7 @@ app.get("/syncimg", async (req, res) => {
 
 // === ANNOUNCEMENTS ===
 
-// Get announcement
-app.get("/announcements", async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT content FROM my_schema.announcements ORDER BY updated_at DESC LIMIT 1"
-    );
 
-    if (result.rows.length === 0)
-      return res.json({ content: "" });
-
-    res.json({ content: result.rows[0].content });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to load announcement" });
-  }
-});
 
 // Update announcement – admin only
 // Get announcement

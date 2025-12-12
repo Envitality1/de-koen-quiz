@@ -37,6 +37,24 @@
     <h3>📌 Announcements</h3>
     <textarea id="announcementBox" class="announcement-box" readonly>Loading...</textarea>
   </div>
+  <script>
+    async function loadAnnouncement() {
+      const box = document.getElementById("announcementBox");
+      try {
+        const res = await fetch("/announcements");
+        if (!res.ok) throw new Error("Failed to fetch announcements");
+
+        const data = await res.json();
+        box.innerText = data.content || "No announcements yet.";
+      } catch (err) {
+        console.error(err);
+        box.innerText = "Failed to load announcements.";
+      }
+    }
+
+    // Call it on page load
+    loadAnnouncement();
+  </script>
 
 
   </div>

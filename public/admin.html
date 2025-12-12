@@ -27,7 +27,7 @@
   <script>
     // Load latest announcement
     async function loadAnnouncement() {
-      try {
+      try { 
         const res = await fetch("/announcements");
         const data = await res.json();
         document.getElementById("announcementInput").value = data.content || "";
@@ -71,26 +71,28 @@
 
     // Save question (optional, needs /question POST endpoint)
     async function updateQuestion() {
-      const question = document.getElementById("question").value.trim();
-      const choices = document.getElementById("choices").value.trim();
-      const msg = document.getElementById("questionMsg");
+  const question = document.getElementById("question").value.trim();
+  const choices = document.getElementById("choices").value.trim();
+  const msg = document.getElementById("questionMsg");
 
-      if (!question || !choices) {
-        msg.style.color = "red";
-        msg.innerText = "Enter both question and choices.";
-        return;
-      }
+  if (!question) {
+    msg.style.color = "red";
+    msg.innerText = "Enter a question.";
+    return;
+  }
 
       try {
         const res = await fetch("/question", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question, choices })
+          body: JSON.stringify({ question, choices: choices || null }) // allow empty choices
         });
 
         if (res.ok) {
           msg.style.color = "green";
           msg.innerText = "Question updated!";
+          document.getElementById("question").value = "";
+          document.getElementById("choices").value = "";
         } else {
           const data = await res.json();
           msg.style.color = "red";
@@ -101,7 +103,7 @@
         msg.innerText = "Error connecting to server";
         console.error(err);
       }
-    }
+    }   
 
     loadAnnouncement();
   </script>

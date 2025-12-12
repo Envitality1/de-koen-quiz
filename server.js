@@ -160,7 +160,7 @@ app.get("/announcements", async (req, res) => {
 app.get("/announcements", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT content FROM my_schema.announcements ORDER BY updated_at DESC LIMIT 1"
+      "SELECT content FROM announcements ORDER BY updated_at DESC LIMIT 1"
     );
 
     if (result.rows.length === 0)

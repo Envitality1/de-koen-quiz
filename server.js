@@ -158,6 +158,27 @@ app.get("/announcements", async (req, res) => {
   }
 });
 
+// Update announcement – admin only
+app.post("/announcements", async (req, res) => {
+  if (!req.session.admin) return res.status(401).json({ error: "Unauthorized" });
+
+  const { content } = req.body;
+  if (!content) return res.status(400).json({ error: "No content provided" });
+
+  try {
+    // Insert new announcement row
+    await pool.query(
+      "INSERT INTO announcements (content, updated_at) VALUES ($1, NOW())",
+      [content]
+    );
+    res.json({ status: "ok" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update announcement" });
+  }
+});
+
+
 
 // --- START SERVER ---
 const port = process.env.PORT || 3000;

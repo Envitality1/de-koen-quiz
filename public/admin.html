@@ -14,53 +14,96 @@
       <input id="question" placeholder="New question">
       <textarea id="choices" placeholder="Choices (comma separated)"></textarea>
       <button onclick="updateQuestion()">Save Question</button>
+      <div id="questionMsg" style="margin-top:5px;color:green;"></div>
 
       <h1>Announcements</h1>
-      <textarea id="announcement" placeholder="Write announcements here..."></textarea>
+      <textarea id="announcementInput" placeholder="Write announcements here..."></textarea>
       <button onclick="saveAnnouncement()">Save Announcement</button>
+      <div id="announcementMsg" style="margin-top:5px;color:green;"></div>
     </div>
 
   </div>
 
   <script>
+    // Load latest announcement
+    async function loadAnnouncement() {
+      try {
+        const res = await fetch("/announcements");
+        const data = await res.json();
+        document.getElementById("announcementInput").value = data.content || "";
+      } catch (err) {
+        console.error("Failed to load announcement:", err);
+      }
+    }
+
+    // Save announcement
+    async function saveAnnouncement() {
+      const content = document.getElementById("announcementInput").value.trim();
+      const msg = document.getElementById("announcementMsg");
+
+      if (!content) {
+        msg.style.color = "red";
+        msg.innerText = "Please enter some text.";
+        return;
+      }
+
+      try {
+        const res = await fetch("/announcements", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content })
+        });
+
+        if (res.ok) {
+          msg.style.color = "green";
+          msg.innerText = "Announcement updated!";
+        } else {
+          const data = await res.json();
+          msg.style.color = "red";
+          msg.innerText = data.error || "Failed to update announcement";
+        }
+      } catch (err) {
+        msg.style.color = "red";
+        msg.innerText = "Error connecting to server";
+        console.error(err);
+      }
+    }
+
+    // Save question (optional, needs /question POST endpoint)
     async function updateQuestion() {
       const question = document.getElementById("question").value.trim();
       const choices = document.getElementById("choices").value.trim();
-      if (!question) return alert("Question cannot be empty.");
+      const msg = document.getElementById("questionMsg");
+
+      if (!question || !choices) {
+        msg.style.color = "red";
+        msg.innerText = "Enter both question and choices.";
+        return;
+      }
 
       try {
-        const res = await fetch("/admin/update-question", {
+        const res = await fetch("/question", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question, choices })
         });
-        if (res.ok) alert("Question updated!");
-        else alert("Failed to update.");
+
+        if (res.ok) {
+          msg.style.color = "green";
+          msg.innerText = "Question updated!";
+        } else {
+          const data = await res.json();
+          msg.style.color = "red";
+          msg.innerText = data.error || "Failed to update question";
+        }
       } catch (err) {
-        alert("Error saving question.");
+        msg.style.color = "red";
+        msg.innerText = "Error connecting to server";
+        console.error(err);
       }
     }
 
-    async function loadAnnouncement() {
-  const res = await fetch("/announcement");
-  const data = await res.json();
-  document.getElementById("announcementInput").value = data.text || "";
-}
-
-async function saveAnnouncement() {
-  const text = document.getElementById("announcementInput").value;
-
-  const res = await fetch("/announcement", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text })
-  });
-
-  alert(res.ok ? "Announcement saved!" : "Failed to save");
-}
-
-loadAnnouncement();
-
+    loadAnnouncement();
   </script>
 </body>
 </html>

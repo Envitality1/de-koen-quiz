@@ -170,13 +170,33 @@ app.post("/announcements", async (req, res) => {
     await pool.query(
       "INSERT INTO announcements (content, updated_at) VALUES ($1, NOW())",
       [content]
-    );
+    );  
     res.json({ status: "ok" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to update announcement" });
   }
 });
+
+// Add new question – admin only
+app.post("/question", async (req, res) => {
+  if (!req.session.admin) return res.status(401).json({ error: "Unauthorized" });
+
+  const { question, choices } = req.body;
+  if (!question) return res.status(400).json({ error: "Question required" });
+
+  try {
+    await pool.query(
+      "INSERT INTO questions (question, choices, created_at) VALUES ($1, $2, NOW())",
+      [question, choices || null]
+    );
+    res.json({ status: "ok" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to insert question" });
+  }
+});
+
 
 
 

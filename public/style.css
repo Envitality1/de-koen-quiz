@@ -1,113 +1,37 @@
-body {
-  margin: 0;
-  font-family: "Inter", sans-serif;
-  background: linear-gradient(135deg, #fff0f0, #ffeaea);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 20px;
-  position: relative;
-  overflow: hidden;
+/* =====================
+   HISTORY THEME
+   ===================== */
+
+.history-theme {
+  background: #f4f1ea;
+  font-family: "Georgia", "Times New Roman", serif;
+  color: #2b2b2b;
 }
 
-/* Garland & Presents */
-.garland { position: absolute; top: 0; width: 100%; height: 60px; background: repeating-linear-gradient(45deg, red, red 10px, white 10px, white 20px); z-index: 1; }
-.presents { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 1; }
-.present { width: 50px; height: 50px; background: red; border: 3px solid white; border-radius: 8px; animation: bounce 2s infinite alternate; }
-.present:nth-child(2) { background: #ff5555; animation-delay: 0.2s; }
-.present:nth-child(3) { background: #ff7777; animation-delay: 0.4s; }
-@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
-
-/* Layout */
-.layout { display: flex; gap: 28px; justify-content: center; width: 100%; max-width: 1000px; z-index: 2; }
-
-.quiz-card {
-  background: white;
-  padding: 35px 40px;
-  border-radius: 20px;
-  width: 420px;
-  box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.15);
-  text-align: center;
-  animation: fadeIn 0.4s ease;
-  border: 3px solid red;
+.quiz-card,
+.notepad {
+  background: #fffaf0;
+  border: 1px solid #d6cfc4;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
-.announcement-box {
+h1, h3 {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.ad-image {
   width: 100%;
-  height: 350px;
-  padding: 20px;
-  border-radius: 12px;
-  background: #fffdf4;
-  border: 2px solid #e0d5a5;
-  font-family: "Courier New", monospace;
-  font-size: 16px;
-  line-height: 1.6;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0px,
-    transparent 24px,
-    #f5eec4 25px
-  );
+  border-radius: 6px;
+  margin-bottom: 10px;
+  border: 1px solid #c9c2b8;
 }
 
-#announcementBox[readonly] {
-  background-color: #fffdf4;
-  color: #333;
-  border: none;
-  resize: none;
-}
-
-
-
-
-
-@media (max-width: 880px) {
-  .layout { flex-direction: column; align-items: center; }
-  .quiz-card, .notepad { width: 90%; max-width: 600px; }
-}
-
-@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-h1 { margin-top: 0; font-size: 28px; color: red; }
-#question { font-size: 20px; margin: 20px 0 25px; color: #a60000; font-weight: 600; }
-
-input, textarea { width: 100%; padding: 12px 14px; margin-top: 10px; border-radius: 12px; border: 1px solid #ffcccc; font-size: 16px; outline: none; transition: 0.2s; font-family: inherit; }
-textarea { min-height: 80px; max-height: 250px; }
-input:focus, textarea:focus { border-color: red; box-shadow: 0 0 0 3px rgba(255,0,0,0.2); }
-
-#choices button { padding: 10px 16px; margin: 5px; border-radius: 12px; font-size: 15px; border: none; cursor: pointer; background: #ffeaea; color: red; transition: 0.2s; }
-#choices button:hover { background: #ffd6d6; transform: translateY(-2px); }
-
-button.submit-btn { width: 100%; margin-top: 15px; padding: 14px; border: none; background: red; color: white; font-size: 17px; border-radius: 14px; cursor: pointer; transition: 0.2s; }
-button.submit-btn:hover { background: #a60000; transform: translateY(-2px); }
-
-.credits { margin-top: 18px; font-size: 13px; opacity: 0.9; color: #4b4b4b; }
-a.sheet-link { color: red; text-decoration: underline; font-size: 13px; }
-
-.snow {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 9999;
-}
-
-.snowflake {
-  position: absolute;
-  top: -2em; /* start above the screen */
-  color: white;
-  user-select: none;
-  opacity: 0.9;
-  animation-name: fall;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
-
-@keyframes fall {
-  0% { transform: translateY(-10px) rotate(0deg); }
-  100% { transform: translateY(110vh) rotate(360deg); }
+.announcement-text {
+  background: #fdfbf7;
+  border: 1px solid #d6cfc4;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  line-height: 1.4;
 }

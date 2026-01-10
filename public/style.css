@@ -202,3 +202,15 @@ a.sheet-link {
 .snowflake {
   display: none;
 }
+
+.ad-image {
+  width: 100%;         /* responsive to container width */
+  max-width: 400px;    /* cap width so it doesn’t get huge */
+  height: auto;        /* maintain aspect ratio */
+  border-radius: 6px;
+  margin-bottom: 10px;
+  border: 1px solid #c9c2b8;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;  /* center in the notepad */
+}
